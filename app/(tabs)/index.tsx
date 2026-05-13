@@ -1,98 +1,297 @@
-import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
+import * as Haptics from 'expo-haptics';
+import * as Notifications from 'expo-notifications';
+import { useCallback, useEffect, useState } from 'react';
+import { Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
+import Animated, {
+  Easing,
+  useAnimatedStyle,
+  useSharedValue,
+  withDelay,
+  withTiming,
+} from 'react-native-reanimated';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { HelloWave } from '@/components/hello-wave';
-import ParallaxScrollView from '@/components/parallax-scroll-view';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { Link } from 'expo-router';
+import { FordLogo } from '@/components/ford-logo';
+import { MeshGradient } from '@/components/mesh-gradient';
+import { SosModal } from '@/components/sos-modal';
+import { VehicleCard3D } from '@/components/vehicle-card-3d';
+import { Colors, Radius, Spacing, Typography } from '@/constants/theme';
+import { useGyroTilt } from '@/hooks/useGyroTilt';
+import { useShakeDetector } from '@/hooks/useShakeDetector';
+import { useAuthStore } from '@/store/auth';
+import { useSosStore } from '@/store/sos';
+
+function QuickAction({ icon, label, onPress }: { icon: string; label: string; onPress?: () => void }) {
+  return (
+    <Pressable
+      style={({ pressed }) => [styles.actionCard, pressed && { opacity: 0.8, transform: [{ scale: 0.96 }] }]}
+      onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); onPress?.(); }}
+    >
+      <Text style={styles.actionIcon}>{icon}</Text>
+      <Text style={styles.actionLabel}>{label}</Text>
+    </Pressable>
+  );
+}
+
+function StatRow({ label, value, accent }: { label: string; value: string; accent?: boolean }) {
+  return (
+    <View style={styles.statRow}>
+      <Text style={styles.statLabel}>{label}</Text>
+      <Text style={[styles.statValue, accent && { color: Colors.blue }]}>{value}</Text>
+    </View>
+  );
+}
 
 export default function HomeScreen() {
-  return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({
-              ios: 'cmd + d',
-              android: 'cmd + m',
-              web: 'F12',
-            })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <Link href="/modal">
-          <Link.Trigger>
-            <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-          </Link.Trigger>
-          <Link.Preview />
-          <Link.Menu>
-            <Link.MenuAction title="Action" icon="cube" onPress={() => alert('Action pressed')} />
-            <Link.MenuAction
-              title="Share"
-              icon="square.and.arrow.up"
-              onPress={() => alert('Share pressed')}
-            />
-            <Link.Menu title="More" icon="ellipsis">
-              <Link.MenuAction
-                title="Delete"
-                icon="trash"
-                destructive
-                onPress={() => alert('Delete pressed')}
-              />
-            </Link.Menu>
-          </Link.Menu>
-        </Link>
+  const { user, vehicle } = useAuthStore();
+  const firstName = user?.name?.split(' ')[0] ?? 'Driver';
+  const { isAssistModeOn, toggleAssistMode, persistentNotifId, setPersistentNotifId } = useSosStore();
+  const { tiltX, tiltY } = useGyroTilt();
+  const [sosVisible, setSosVisible] = useState(false);
 
-        <ThemedText>
-          {`Tap the Explore tab to learn more about what's included in this starter app.`}
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          {`When you're ready, run `}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
+  const handleShake = useCallback(() => {
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+    setSosVisible(true);
+  }, []);
+
+  useShakeDetector(handleShake, isAssistModeOn);
+
+  useEffect(() => {
+    if (isAssistModeOn) {
+      Notifications.scheduleNotificationAsync({
+        content: {
+          title: 'Ford Assist ativo',
+          body: 'Sacuda o celular 3x para socorro de emergência',
+          sticky: true,
+        },
+        trigger: null,
+      }).then((id) => setPersistentNotifId(id));
+    } else {
+      if (persistentNotifId) {
+        Notifications.dismissNotificationAsync(persistentNotifId);
+        setPersistentNotifId(null);
+      }
+    }
+  }, [isAssistModeOn]);
+
+  const headerY = useSharedValue(-20);
+  const headerOpacity = useSharedValue(0);
+  const contentY = useSharedValue(30);
+  const contentOpacity = useSharedValue(0);
+
+  useEffect(() => {
+    const fast = { duration: 500, easing: Easing.out(Easing.quad) };
+    const slow = { duration: 600, easing: Easing.out(Easing.cubic) };
+    headerOpacity.value = withTiming(1, fast);
+    headerY.value = withTiming(0, fast);
+    contentOpacity.value = withDelay(200, withTiming(1, slow));
+    contentY.value = withDelay(200, withTiming(0, slow));
+  }, []);
+
+  const headerStyle = useAnimatedStyle(() => ({
+    opacity: headerOpacity.value,
+    transform: [{ translateY: headerY.value }],
+  }));
+  const contentStyle = useAnimatedStyle(() => ({
+    opacity: contentOpacity.value,
+    transform: [{ translateY: contentY.value }],
+  }));
+
+  return (
+    <View style={styles.root}>
+      <MeshGradient gyroTiltX={tiltX} gyroTiltY={tiltY} />
+      <SafeAreaView style={styles.safe} edges={['top']}>
+        <ScrollView
+          style={styles.scroll}
+          contentContainerStyle={styles.content}
+          showsVerticalScrollIndicator={false}
+        >
+          {/* Header */}
+          <Animated.View style={[styles.header, headerStyle]}>
+            <FordLogo width={120} height={50} />
+            <View style={styles.avatar}>
+              <Text style={styles.avatarText}>{firstName[0].toUpperCase()}</Text>
+            </View>
+          </Animated.View>
+
+          <Animated.View style={contentStyle}>
+            {/* Greeting */}
+            <View style={styles.greeting}>
+              <Text style={styles.greetingSmall}>Good morning,</Text>
+              <Text style={styles.greetingName}>{firstName} 👋</Text>
+            </View>
+
+            {/* Vehicle card */}
+            {vehicle ? (
+              <VehicleCard3D vehicle={vehicle} gyroTiltX={tiltX} gyroTiltY={tiltY} />
+            ) : (
+              <View style={styles.noVehicleCard}>
+                <Text style={styles.noVehicleEmoji}>🚗</Text>
+                <Text style={styles.noVehicleText}>No vehicle added yet</Text>
+                <Text style={styles.noVehicleSub}>Go to My Car to add your Ford.</Text>
+              </View>
+            )}
+
+            {/* Stats */}
+            <Text style={styles.sectionTitle}>OVERVIEW</Text>
+            <View style={styles.card}>
+              <StatRow label="Next Service" value="Jun 15, 2026" />
+              <View style={styles.divider} />
+              <StatRow label="Last Visit" value="Mar 20, 2026" />
+              <View style={styles.divider} />
+              <StatRow label="Open Cases" value="0" accent />
+            </View>
+
+            {/* Quick actions */}
+            <Text style={styles.sectionTitle}>QUICK ACTIONS</Text>
+            <View style={styles.actionsRow}>
+              <QuickAction icon="🗓️" label="Book Service" />
+              <QuickAction icon="💬" label="Get Support" />
+              <QuickAction icon="📋" label="History" />
+            </View>
+
+            {/* Ford Assist toggle */}
+            <Text style={styles.sectionTitle}>ASSISTÊNCIA</Text>
+            <Pressable
+              style={({ pressed }) => [styles.assistCard, pressed && { opacity: 0.9 }]}
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                toggleAssistMode();
+              }}
+            >
+              <View style={styles.assistLeft}>
+                <View style={[styles.assistDot, isAssistModeOn && styles.assistDotActive]} />
+                <View>
+                  <Text style={styles.assistTitle}>Modo Assistido</Text>
+                  <Text style={styles.assistSub}>
+                    {isAssistModeOn ? 'Sacuda 3x para emergência' : 'Ative para suporte emergencial'}
+                  </Text>
+                </View>
+              </View>
+              <Switch
+                value={isAssistModeOn}
+                onValueChange={() => {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                  toggleAssistMode();
+                }}
+                trackColor={{ false: Colors.border, true: 'rgba(229,57,53,0.5)' }}
+                thumbColor={isAssistModeOn ? Colors.danger : Colors.muted}
+              />
+            </Pressable>
+          </Animated.View>
+
+          <View style={{ height: 110 }} />
+        </ScrollView>
+      </SafeAreaView>
+
+      <SosModal visible={sosVisible} onClose={() => setSosVisible(false)} />
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  titleContainer: {
+  root: { flex: 1 },
+  safe: { flex: 1 },
+  scroll: { flex: 1 },
+  content: { paddingHorizontal: Spacing.lg },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingTop: Spacing.md,
+    marginBottom: Spacing.lg,
+  },
+  avatar: {
+    width: 40, height: 40, borderRadius: 20,
+    backgroundColor: Colors.blue,
+    alignItems: 'center', justifyContent: 'center',
+    shadowColor: Colors.blue,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.5,
+    shadowRadius: 8,
+    elevation: 6,
+  },
+  avatarText: { color: Colors.white, fontWeight: '700', fontSize: 16 },
+  greeting: { marginBottom: Spacing.lg },
+  greetingSmall: { ...Typography.body, fontSize: 14 },
+  greetingName: { color: Colors.white, fontSize: 32, fontWeight: '800' },
+  noVehicleCard: {
+    backgroundColor: 'rgba(10,15,30,0.6)',
+    borderRadius: Radius.xl,
+    padding: Spacing.xl,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    alignItems: 'center',
+    gap: Spacing.sm,
+    marginBottom: Spacing.md,
+  },
+  noVehicleEmoji: { fontSize: 48 },
+  noVehicleText: { ...Typography.subheading, fontSize: 16 },
+  noVehicleSub: { ...Typography.body, fontSize: 13, textAlign: 'center' },
+  sectionTitle: { ...Typography.label, fontSize: 11, letterSpacing: 2, marginBottom: Spacing.sm, marginTop: Spacing.xs },
+  card: {
+    backgroundColor: 'rgba(13,21,38,0.8)',
+    borderRadius: Radius.lg,
+    padding: Spacing.lg,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    marginBottom: Spacing.md,
+  },
+  divider: { height: 1, backgroundColor: Colors.border, marginVertical: Spacing.md },
+  statRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  statLabel: { ...Typography.body, fontSize: 14 },
+  statValue: { color: Colors.white, fontWeight: '600', fontSize: 14 },
+  actionsRow: { flexDirection: 'row', gap: Spacing.sm },
+  actionCard: {
+    flex: 1,
+    backgroundColor: 'rgba(13,21,38,0.8)',
+    borderRadius: Radius.lg,
+    padding: Spacing.md,
+    alignItems: 'center',
+    gap: Spacing.sm,
+    borderWidth: 1,
+    borderColor: Colors.border,
+  },
+  actionIcon: { fontSize: 28 },
+  actionLabel: { color: Colors.mutedLight, fontSize: 11, fontWeight: '600', textAlign: 'center' },
+  assistCard: {
+    backgroundColor: 'rgba(13,21,38,0.8)',
+    borderRadius: Radius.lg,
+    padding: Spacing.md,
+    borderWidth: 1,
+    borderColor: Colors.border,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    justifyContent: 'space-between',
+    marginBottom: Spacing.md,
   },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 8,
+  assistLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.md,
+    flex: 1,
   },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
+  assistDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: Colors.muted,
+  },
+  assistDotActive: {
+    backgroundColor: Colors.danger,
+    shadowColor: Colors.danger,
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.8,
+    shadowRadius: 6,
+    elevation: 4,
+  },
+  assistTitle: {
+    color: Colors.white,
+    fontSize: 15,
+    fontWeight: '600',
+  },
+  assistSub: {
+    ...Typography.caption,
+    marginTop: 2,
   },
 });
