@@ -7,7 +7,7 @@ import Animated, {
   withSpring,
 } from 'react-native-reanimated';
 
-import { Radius } from '@/constants/theme';
+import { Colors, Radius, Springs } from '@/constants/theme';
 
 interface Props {
   label: string;
@@ -23,19 +23,19 @@ export function AnimatedButton({ label, onPress, style }: Props) {
   }));
 
   function handlePressIn() {
-    scale.value = withSpring(0.97, { damping: 15, stiffness: 300 });
+    scale.value = withSpring(0.97, Springs.snap);
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
   }
 
   function handlePressOut() {
-    scale.value = withSpring(1, { damping: 12, stiffness: 200 });
+    scale.value = withSpring(1, Springs.soft);
   }
 
   return (
     <Animated.View style={[animatedScale, style]}>
       <Pressable onPress={onPress} onPressIn={handlePressIn} onPressOut={handlePressOut}>
         <LinearGradient
-          colors={['#0057FF', '#3385FF']}
+          colors={[Colors.blue, Colors.blueLight]}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
           style={styles.gradient}
@@ -49,7 +49,7 @@ export function AnimatedButton({ label, onPress, style }: Props) {
 
 const styles = StyleSheet.create({
   gradient: {
-    borderRadius: Radius.md,
+    borderRadius: Radius.lg,
     paddingVertical: 16,
     alignItems: 'center',
   },

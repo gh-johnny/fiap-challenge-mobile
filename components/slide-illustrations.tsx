@@ -1,201 +1,735 @@
 import { useEffect } from 'react';
 import { Dimensions } from 'react-native';
-import Animated, { useAnimatedProps, useSharedValue, withDelay, withTiming, Easing } from 'react-native-reanimated';
-import Svg, { Circle, Line, Path, Rect } from 'react-native-svg';
+import {
+  Easing,
+  useSharedValue,
+  withDelay,
+  withTiming,
+} from 'react-native-reanimated';
+import {
+  BlurMask,
+  Canvas,
+  Circle,
+  Fill,
+  Group,
+  Line,
+  LinearGradient,
+  Paint,
+  Path,
+  RoundedRect,
+  vec,
+} from '@shopify/react-native-skia';
+
+// ─── SVG imports (CarSilhouette only) ─────────────────────────────────────────
+import Animated, { useAnimatedProps } from 'react-native-reanimated';
+import Svg, { Circle as SvgCircle, Line as SvgLine, Path as SvgPath, Rect as SvgRect } from 'react-native-svg';
 
 const { width } = Dimensions.get('window');
-const W = width * 0.85;
-const H = W;
-const STROKE = 1.8;
-const COLOR = '#3385FF';
-const DIM = 'rgba(255,255,255,0.15)';
+const SZ = Math.min(width * 0.78, 300);
 
-const AnimatedPath = Animated.createAnimatedComponent(Path);
-const AnimatedCircle = Animated.createAnimatedComponent(Circle);
-const AnimatedRect = Animated.createAnimatedComponent(Rect);
-const AnimatedLine = Animated.createAnimatedComponent(Line);
+// ─── Shared entrance hook ─────────────────────────────────────────────────────
 
-function useDraw(length: number, delay = 0, duration = 900) {
-  const progress = useSharedValue(length);
+function useEntrance(delay = 0, dur = 700) {
+  const opacity = useSharedValue(0);
   useEffect(() => {
-    progress.value = withDelay(delay, withTiming(0, { duration, easing: Easing.out(Easing.cubic) }));
+    opacity.value = withDelay(delay, withTiming(1, { duration: dur, easing: Easing.out(Easing.cubic) }));
   }, []);
-  return useAnimatedProps(() => ({ strokeDashoffset: progress.value }));
+  return opacity;
 }
 
-// Slide 1 — Calendar with clock hands + checkmark
+// ─── Slide 1 — Schedule ──────────────────────────────────────────────────────
+
 export function ScheduleIllustration() {
-  const calBody = useDraw(600, 0, 900);
-  const grid1 = useDraw(200, 200, 600);
-  const grid2 = useDraw(200, 350, 600);
-  const grid3 = useDraw(200, 500, 600);
-  const check = useDraw(120, 800, 500);
-  const clockFace = useDraw(300, 300, 700);
-  const hourHand = useDraw(60, 900, 400);
-  const minHand = useDraw(80, 1000, 400);
+  const bg     = useEntrance(0, 600);
+  const card   = useEntrance(200, 500);
+  const detail = useEntrance(500, 500);
+  const badge  = useEntrance(700, 500);
+
+  const cx = SZ / 2;
+  const cy = SZ / 2;
+
+  // Card dimensions
+  const cX = SZ * 0.1;
+  const cY = SZ * 0.16;
+  const cW = SZ * 0.72;
+  const cH = SZ * 0.58;
+  const hH = SZ * 0.16; // header height
+
+  // Clock badge
+  const bCx = SZ * 0.76;
+  const bCy = SZ * 0.76;
+  const bR  = SZ * 0.12;
 
   return (
-    <Svg width={W} height={H} viewBox="0 0 200 200">
-      {/* Calendar body */}
-      <AnimatedPath
-        d="M30 50 L30 160 Q30 165 35 165 L165 165 Q170 165 170 160 L170 50 Z"
-        stroke={COLOR} strokeWidth={STROKE} fill="none"
-        strokeDasharray="600" animatedProps={calBody}
-      />
-      {/* Header bar */}
-      <AnimatedPath
-        d="M30 50 L170 50 L170 72 L30 72 Z"
-        stroke={COLOR} strokeWidth={STROKE} fill="rgba(51,133,255,0.12)"
-        strokeDasharray="600" animatedProps={calBody}
-      />
-      {/* Rings */}
-      <AnimatedPath d="M70 40 L70 58" stroke={COLOR} strokeWidth={STROKE * 1.5} strokeLinecap="round" strokeDasharray="200" animatedProps={grid1} />
-      <AnimatedPath d="M100 40 L100 58" stroke={COLOR} strokeWidth={STROKE * 1.5} strokeLinecap="round" strokeDasharray="200" animatedProps={grid1} />
-      <AnimatedPath d="M130 40 L130 58" stroke={COLOR} strokeWidth={STROKE * 1.5} strokeLinecap="round" strokeDasharray="200" animatedProps={grid1} />
-      {/* Grid cells row 1 */}
-      <AnimatedPath d="M48 90 L58 90 M78 90 L88 90 M108 90 L118 90 M138 90 L148 90" stroke={DIM} strokeWidth={STROKE} strokeLinecap="round" strokeDasharray="200" animatedProps={grid1} />
-      {/* Grid cells row 2 */}
-      <AnimatedPath d="M48 108 L58 108 M78 108 L88 108 M108 108 L118 108 M138 108 L148 108" stroke={DIM} strokeWidth={STROKE} strokeLinecap="round" strokeDasharray="200" animatedProps={grid2} />
-      {/* Grid cells row 3 */}
-      <AnimatedPath d="M48 126 L58 126 M78 126 L88 126 M108 126 L118 126" stroke={DIM} strokeWidth={STROKE} strokeLinecap="round" strokeDasharray="200" animatedProps={grid3} />
-      {/* Highlighted cell */}
-      <AnimatedRect x="128" y="118" width="20" height="16" rx="3" stroke={COLOR} strokeWidth={STROKE} fill="rgba(51,133,255,0.2)" strokeDasharray="200" animatedProps={grid3} />
-      {/* Checkmark */}
-      <AnimatedPath d="M132 126 L136 130 L144 122" stroke={COLOR} strokeWidth={STROKE * 1.5} strokeLinecap="round" strokeLinejoin="round" strokeDasharray="120" animatedProps={check} />
-      {/* Clock overlay bottom right */}
-      <AnimatedCircle cx="155" cy="155" r="20" stroke={COLOR} strokeWidth={STROKE} fill="rgba(2,8,18,0.9)" strokeDasharray="300" animatedProps={clockFace} />
-      <AnimatedLine x1="155" y1="155" x2="155" y2="143" stroke={COLOR} strokeWidth={STROKE * 1.2} strokeLinecap="round" strokeDasharray="60" animatedProps={hourHand} />
-      <AnimatedLine x1="155" y1="155" x2="163" y2="155" stroke={COLOR} strokeWidth={STROKE} strokeLinecap="round" strokeDasharray="80" animatedProps={minHand} />
-    </Svg>
+    <Canvas style={{ width: SZ, height: SZ }}>
+      {/* ── Ambient blobs ── */}
+      <Group opacity={bg}>
+        <Circle cx={cx} cy={cy - SZ * 0.05} r={SZ * 0.42}>
+          <Paint color="rgba(51,133,255,0.38)">
+            <BlurMask blur={SZ * 0.18} style="normal" />
+          </Paint>
+        </Circle>
+        <Circle cx={SZ * 0.75} cy={SZ * 0.22} r={SZ * 0.22}>
+          <Paint color="rgba(107,53,240,0.30)">
+            <BlurMask blur={SZ * 0.12} style="normal" />
+          </Paint>
+        </Circle>
+        <Circle cx={SZ * 0.18} cy={SZ * 0.72} r={SZ * 0.18}>
+          <Paint color="rgba(1,66,192,0.28)">
+            <BlurMask blur={SZ * 0.10} style="normal" />
+          </Paint>
+        </Circle>
+      </Group>
+
+      {/* ── Calendar card ── */}
+      <Group opacity={card}>
+        {/* Card body */}
+        <RoundedRect x={cX} y={cY} width={cW} height={cH} r={SZ * 0.055}>
+          <LinearGradient
+            start={vec(cX, cY)}
+            end={vec(cX, cY + cH)}
+            colors={['rgba(13,26,58,0.96)', 'rgba(8,16,40,0.96)']}
+          />
+        </RoundedRect>
+        {/* Card border */}
+        <RoundedRect x={cX} y={cY} width={cW} height={cH} r={SZ * 0.055}>
+          <Paint color="rgba(255,255,255,0.10)" style="stroke" strokeWidth={1.2} />
+        </RoundedRect>
+
+        {/* Header band */}
+        <RoundedRect x={cX} y={cY} width={cW} height={hH} r={SZ * 0.055}>
+          <LinearGradient
+            start={vec(cX, cY)}
+            end={vec(cX + cW, cY)}
+            colors={['#0142C0', '#3385FF']}
+          />
+        </RoundedRect>
+        {/* header bottom fill (covers lower rounded corners of header) */}
+        <RoundedRect x={cX} y={cY + hH * 0.55} width={cW} height={hH * 0.45} r={0}>
+          <LinearGradient
+            start={vec(cX, cY + hH * 0.55)}
+            end={vec(cX + cW, cY + hH * 0.55)}
+            colors={['#0142C0', '#3385FF']}
+          />
+        </RoundedRect>
+
+        {/* Header label line */}
+        <Line p1={vec(cX + cW * 0.13, cY + hH * 0.55)} p2={vec(cX + cW * 0.55, cY + hH * 0.55)}>
+          <Paint color="rgba(255,255,255,0.70)" strokeWidth={2.5} strokeCap="round" />
+        </Line>
+
+        {/* Ring knobs */}
+        {[0.28, 0.50, 0.72].map((t, i) => (
+          <Circle key={i} cx={cX + cW * t} cy={cY} r={SZ * 0.022}>
+            <Paint color="#0A1830" />
+          </Circle>
+        ))}
+        {[0.28, 0.50, 0.72].map((t, i) => (
+          <Circle key={i} cx={cX + cW * t} cy={cY} r={SZ * 0.022}>
+            <Paint color="rgba(51,133,255,0.9)" style="stroke" strokeWidth={2} />
+          </Circle>
+        ))}
+      </Group>
+
+      {/* ── Calendar grid + highlight ── */}
+      <Group opacity={detail}>
+        {/* Grid dots 4×3 */}
+        {[0, 1, 2, 3].map(col =>
+          [0, 1, 2].map(row => (
+            <Circle
+              key={`${col}-${row}`}
+              cx={cX + cW * (0.16 + col * 0.22)}
+              cy={cY + hH + SZ * 0.09 + row * SZ * 0.1}
+              r={SZ * 0.014}
+            >
+              <Paint color="rgba(160,174,207,0.4)" />
+            </Circle>
+          ))
+        )}
+
+        {/* Highlighted cell with glow */}
+        <RoundedRect
+          x={cX + cW * 0.52}
+          y={cY + hH + SZ * 0.21}
+          width={cW * 0.22}
+          height={SZ * 0.09}
+          r={SZ * 0.025}
+        >
+          <Paint color="rgba(51,133,255,0.25)">
+            <BlurMask blur={4} style="normal" />
+          </Paint>
+        </RoundedRect>
+        <RoundedRect
+          x={cX + cW * 0.52}
+          y={cY + hH + SZ * 0.21}
+          width={cW * 0.22}
+          height={SZ * 0.09}
+          r={SZ * 0.025}
+        >
+          <Paint color="rgba(51,133,255,0.85)" style="stroke" strokeWidth={1.5} />
+        </RoundedRect>
+
+        {/* Checkmark */}
+        <Path
+          path={`M ${cX + cW * 0.558} ${cY + hH + SZ * 0.265} L ${cX + cW * 0.590} ${cY + hH + SZ * 0.298} L ${cX + cW * 0.645} ${cY + hH + SZ * 0.234}`}
+        >
+          <Paint color="rgba(255,255,255,0.95)" style="stroke" strokeWidth={2.8} strokeCap="round" strokeJoin="round" />
+        </Path>
+      </Group>
+
+      {/* ── Clock badge ── */}
+      <Group opacity={badge}>
+        {/* Glow ring */}
+        <Circle cx={bCx} cy={bCy} r={bR + SZ * 0.04}>
+          <Paint color="rgba(51,133,255,0.22)">
+            <BlurMask blur={10} style="normal" />
+          </Paint>
+        </Circle>
+        {/* Badge body */}
+        <Circle cx={bCx} cy={bCy} r={bR}>
+          <LinearGradient
+            start={vec(bCx - bR, bCy - bR)}
+            end={vec(bCx + bR, bCy + bR)}
+            colors={['rgba(13,21,38,0.98)', 'rgba(10,26,60,0.98)']}
+          />
+        </Circle>
+        <Circle cx={bCx} cy={bCy} r={bR}>
+          <Paint color="rgba(51,133,255,0.45)" style="stroke" strokeWidth={1.5} />
+        </Circle>
+        {/* Hour hand */}
+        <Line p1={vec(bCx, bCy)} p2={vec(bCx, bCy - bR * 0.58)}>
+          <Paint color="rgba(255,255,255,0.90)" strokeWidth={2.2} strokeCap="round" />
+        </Line>
+        {/* Minute hand */}
+        <Line p1={vec(bCx, bCy)} p2={vec(bCx + bR * 0.48, bCy)}>
+          <Paint color="rgba(51,133,255,0.90)" strokeWidth={1.8} strokeCap="round" />
+        </Line>
+        <Circle cx={bCx} cy={bCy} r={SZ * 0.012}>
+          <Paint color="rgba(255,255,255,0.90)" />
+        </Circle>
+      </Group>
+    </Canvas>
   );
 }
 
-// Slide 2 — Car on road with location pin
+// ─── Slide 2 — Track ─────────────────────────────────────────────────────────
+
 export function TrackIllustration() {
-  const road = useDraw(500, 0, 800);
-  const carBody = useDraw(400, 300, 800);
-  const wheels = useDraw(200, 700, 500);
-  const pin = useDraw(200, 900, 600);
-  const signal1 = useDraw(100, 1100, 400);
-  const signal2 = useDraw(120, 1250, 400);
-  const signal3 = useDraw(140, 1400, 400);
+  const bg   = useEntrance(0, 600);
+  const car  = useEntrance(200, 600);
+  const pin  = useEntrance(600, 500);
+
+  const cx = SZ / 2;
+
+  // Car body coords (scaled to SZ)
+  const carY  = SZ * 0.44;
+  const carH  = SZ * 0.22;
+  const carX  = SZ * 0.10;
+  const carW  = SZ * 0.80;
 
   return (
-    <Svg width={W} height={H} viewBox="0 0 200 200">
-      {/* Road */}
-      <AnimatedPath d="M0 140 Q100 130 200 140" stroke={DIM} strokeWidth={STROKE * 3} fill="none" strokeDasharray="500" animatedProps={road} />
-      <AnimatedPath d="M20 140 L40 140 M80 140 L100 140 M140 140 L160 140" stroke={COLOR} strokeWidth={STROKE} fill="none" strokeLinecap="round" strokeDasharray="500" animatedProps={road} />
-      {/* Car body */}
-      <AnimatedPath
-        d="M50 130 L50 118 Q52 110 62 108 L90 104 Q100 100 108 104 L130 108 Q140 110 142 118 L142 130 Z"
-        stroke={COLOR} strokeWidth={STROKE} fill="rgba(51,133,255,0.1)" strokeDasharray="400" animatedProps={carBody}
-      />
-      {/* Windshield */}
-      <AnimatedPath d="M68 108 L66 118 L126 118 L122 108 Z" stroke={COLOR} strokeWidth={STROKE} fill="rgba(51,133,255,0.2)" strokeDasharray="400" animatedProps={carBody} />
-      {/* Wheels */}
-      <AnimatedCircle cx="72" cy="132" r="8" stroke={COLOR} strokeWidth={STROKE} fill="rgba(2,8,18,0.9)" strokeDasharray="200" animatedProps={wheels} />
-      <AnimatedCircle cx="120" cy="132" r="8" stroke={COLOR} strokeWidth={STROKE} fill="rgba(2,8,18,0.9)" strokeDasharray="200" animatedProps={wheels} />
-      <AnimatedCircle cx="72" cy="132" r="3" stroke={COLOR} strokeWidth={STROKE} fill="none" strokeDasharray="200" animatedProps={wheels} />
-      <AnimatedCircle cx="120" cy="132" r="3" stroke={COLOR} strokeWidth={STROKE} fill="none" strokeDasharray="200" animatedProps={wheels} />
-      {/* Location pin */}
-      <AnimatedPath
-        d="M96 30 Q96 20 106 20 Q116 20 116 30 Q116 42 106 52 Q96 42 96 30 Z"
-        stroke={COLOR} strokeWidth={STROKE} fill="rgba(51,133,255,0.15)" strokeDasharray="200" animatedProps={pin}
-      />
-      <AnimatedCircle cx="106" cy="30" r="4" stroke={COLOR} strokeWidth={STROKE} fill="none" strokeDasharray="200" animatedProps={pin} />
-      {/* Signal arcs */}
-      <AnimatedPath d="M118 18 Q126 26 118 34" stroke={COLOR} strokeWidth={STROKE} fill="none" strokeLinecap="round" strokeDasharray="100" animatedProps={signal1} />
-      <AnimatedPath d="M123 13 Q134 26 123 39" stroke={COLOR} strokeWidth={STROKE * 0.8} fill="none" strokeLinecap="round" strokeDasharray="120" animatedProps={signal2} />
-      <AnimatedPath d="M128 8 Q142 26 128 44" stroke={DIM} strokeWidth={STROKE * 0.6} fill="none" strokeLinecap="round" strokeDasharray="140" animatedProps={signal3} />
-      {/* Dashed line from pin to car */}
-      <AnimatedPath d="M106 52 L106 100" stroke={DIM} strokeWidth={STROKE} strokeDasharray="4 6" animatedProps={pin} />
-    </Svg>
+    <Canvas style={{ width: SZ, height: SZ }}>
+      {/* ── Ambient blobs ── */}
+      <Group opacity={bg}>
+        <Circle cx={cx} cy={SZ * 0.62} r={SZ * 0.38}>
+          <Paint color="rgba(1,66,192,0.35)">
+            <BlurMask blur={SZ * 0.16} style="normal" />
+          </Paint>
+        </Circle>
+        <Circle cx={SZ * 0.22} cy={SZ * 0.25} r={SZ * 0.20}>
+          <Paint color="rgba(107,53,240,0.28)">
+            <BlurMask blur={SZ * 0.12} style="normal" />
+          </Paint>
+        </Circle>
+        <Circle cx={SZ * 0.80} cy={SZ * 0.30} r={SZ * 0.15}>
+          <Paint color="rgba(51,133,255,0.25)">
+            <BlurMask blur={SZ * 0.10} style="normal" />
+          </Paint>
+        </Circle>
+      </Group>
+
+      {/* ── Road ── */}
+      <Group opacity={car}>
+        <Path path={`M ${SZ * 0.0} ${SZ * 0.72} Q ${cx} ${SZ * 0.68} ${SZ} ${SZ * 0.72}`}>
+          <Paint color="rgba(255,255,255,0.08)" style="stroke" strokeWidth={SZ * 0.08} strokeCap="butt" />
+        </Path>
+        {/* Road dashes */}
+        {[0.22, 0.44, 0.66].map((t, i) => (
+          <Line key={i} p1={vec(SZ * t, SZ * 0.706)} p2={vec(SZ * (t + 0.10), SZ * 0.706)}>
+            <Paint color="rgba(51,133,255,0.55)" strokeWidth={2} strokeCap="round" />
+          </Line>
+        ))}
+
+        {/* Car body — solid filled shape */}
+        <Path
+          path={`M ${carX} ${carY + carH}
+                 L ${carX} ${carY + carH * 0.45}
+                 Q ${carX + carW * 0.08} ${carY} ${carX + carW * 0.22} ${carY - carH * 0.18}
+                 L ${carX + carW * 0.52} ${carY - carH * 0.44}
+                 Q ${carX + carW * 0.62} ${carY - carH * 0.55} ${carX + carW * 0.72} ${carY - carH * 0.55}
+                 L ${carX + carW * 0.88} ${carY - carH * 0.18}
+                 Q ${carX + carW * 0.96} ${carY} ${carX + carW} ${carY + carH * 0.45}
+                 L ${carX + carW} ${carY + carH} Z`}
+        >
+          <LinearGradient
+            start={vec(carX, carY - carH * 0.55)}
+            end={vec(carX, carY + carH)}
+            colors={['#0057C8', '#002A7A']}
+          />
+        </Path>
+        {/* Car body border */}
+        <Path
+          path={`M ${carX} ${carY + carH}
+                 L ${carX} ${carY + carH * 0.45}
+                 Q ${carX + carW * 0.08} ${carY} ${carX + carW * 0.22} ${carY - carH * 0.18}
+                 L ${carX + carW * 0.52} ${carY - carH * 0.44}
+                 Q ${carX + carW * 0.62} ${carY - carH * 0.55} ${carX + carW * 0.72} ${carY - carH * 0.55}
+                 L ${carX + carW * 0.88} ${carY - carH * 0.18}
+                 Q ${carX + carW * 0.96} ${carY} ${carX + carW} ${carY + carH * 0.45}
+                 L ${carX + carW} ${carY + carH} Z`}
+        >
+          <Paint color="rgba(51,133,255,0.70)" style="stroke" strokeWidth={2} />
+        </Path>
+
+        {/* Windshield fill */}
+        <Path
+          path={`M ${carX + carW * 0.22} ${carY - carH * 0.18}
+                 L ${carX + carW * 0.52} ${carY - carH * 0.44}
+                 Q ${carX + carW * 0.62} ${carY - carH * 0.55} ${carX + carW * 0.72} ${carY - carH * 0.55}
+                 L ${carX + carW * 0.72} ${carY}
+                 L ${carX + carW * 0.22} ${carY} Z`}
+        >
+          <Paint color="rgba(51,133,255,0.22)" />
+        </Path>
+
+        {/* Door line */}
+        <Line
+          p1={vec(carX + carW * 0.52, carY - carH * 0.44)}
+          p2={vec(carX + carW * 0.52, carY + carH)}
+        >
+          <Paint color="rgba(255,255,255,0.28)" strokeWidth={1.8} />
+        </Line>
+        {/* Door handle */}
+        <Line
+          p1={vec(carX + carW * 0.58, carY + carH * 0.32)}
+          p2={vec(carX + carW * 0.70, carY + carH * 0.32)}
+        >
+          <Paint color="rgba(255,255,255,0.85)" strokeWidth={3} strokeCap="round" />
+        </Line>
+
+        {/* Front wheel glow */}
+        <Circle cx={carX + carW * 0.24} cy={carY + carH} r={SZ * 0.085}>
+          <Paint color="rgba(51,133,255,0.30)">
+            <BlurMask blur={8} style="normal" />
+          </Paint>
+        </Circle>
+        {/* Front wheel */}
+        <Circle cx={carX + carW * 0.24} cy={carY + carH} r={SZ * 0.075}>
+          <LinearGradient
+            start={vec(carX + carW * 0.17, carY + carH - SZ * 0.075)}
+            end={vec(carX + carW * 0.31, carY + carH + SZ * 0.075)}
+            colors={['#0D1526', '#060E1E']}
+          />
+        </Circle>
+        <Circle cx={carX + carW * 0.24} cy={carY + carH} r={SZ * 0.075}>
+          <Paint color="rgba(51,133,255,0.70)" style="stroke" strokeWidth={2.5} />
+        </Circle>
+        <Circle cx={carX + carW * 0.24} cy={carY + carH} r={SZ * 0.030}>
+          <Paint color="rgba(255,255,255,0.25)" style="stroke" strokeWidth={1.5} />
+        </Circle>
+        <Circle cx={carX + carW * 0.24} cy={carY + carH} r={SZ * 0.012}>
+          <Paint color="#3385FF" />
+        </Circle>
+
+        {/* Rear wheel glow */}
+        <Circle cx={carX + carW * 0.78} cy={carY + carH} r={SZ * 0.085}>
+          <Paint color="rgba(51,133,255,0.30)">
+            <BlurMask blur={8} style="normal" />
+          </Paint>
+        </Circle>
+        {/* Rear wheel */}
+        <Circle cx={carX + carW * 0.78} cy={carY + carH} r={SZ * 0.075}>
+          <LinearGradient
+            start={vec(carX + carW * 0.71, carY + carH - SZ * 0.075)}
+            end={vec(carX + carW * 0.85, carY + carH + SZ * 0.075)}
+            colors={['#0D1526', '#060E1E']}
+          />
+        </Circle>
+        <Circle cx={carX + carW * 0.78} cy={carY + carH} r={SZ * 0.075}>
+          <Paint color="rgba(51,133,255,0.70)" style="stroke" strokeWidth={2.5} />
+        </Circle>
+        <Circle cx={carX + carW * 0.78} cy={carY + carH} r={SZ * 0.030}>
+          <Paint color="rgba(255,255,255,0.25)" style="stroke" strokeWidth={1.5} />
+        </Circle>
+        <Circle cx={carX + carW * 0.78} cy={carY + carH} r={SZ * 0.012}>
+          <Paint color="#3385FF" />
+        </Circle>
+
+        {/* Headlights */}
+        {[0, SZ * 0.04, SZ * 0.08].map((offset, i) => (
+          <Line
+            key={i}
+            p1={vec(carX + carW, carY + carH * 0.20 + offset)}
+            p2={vec(carX + carW + SZ * 0.06, carY + carH * 0.15 + offset - SZ * 0.01 * i)}
+          >
+            <Paint color={`rgba(51,133,255,${0.9 - i * 0.2})`} strokeWidth={2.5} strokeCap="round" />
+          </Line>
+        ))}
+        {/* Taillights */}
+        <Line p1={vec(carX, carY + carH * 0.30)} p2={vec(carX - SZ * 0.04, carY + carH * 0.30)}>
+          <Paint color="rgba(229,57,53,0.80)" strokeWidth={3} strokeCap="round" />
+        </Line>
+        <Line p1={vec(carX, carY + carH * 0.48)} p2={vec(carX - SZ * 0.04, carY + carH * 0.48)}>
+          <Paint color="rgba(229,57,53,0.60)" strokeWidth={2.5} strokeCap="round" />
+        </Line>
+      </Group>
+
+      {/* ── Location pin ── */}
+      <Group opacity={pin}>
+        {/* Glow */}
+        <Circle cx={SZ * 0.50} cy={SZ * 0.18} r={SZ * 0.12}>
+          <Paint color="rgba(51,133,255,0.35)">
+            <BlurMask blur={16} style="normal" />
+          </Paint>
+        </Circle>
+        {/* Pin body */}
+        <Path
+          path={`M ${SZ * 0.41} ${SZ * 0.18}
+                 Q ${SZ * 0.41} ${SZ * 0.08} ${SZ * 0.50} ${SZ * 0.08}
+                 Q ${SZ * 0.59} ${SZ * 0.08} ${SZ * 0.59} ${SZ * 0.18}
+                 Q ${SZ * 0.59} ${SZ * 0.28} ${SZ * 0.50} ${SZ * 0.36}
+                 Q ${SZ * 0.41} ${SZ * 0.28} ${SZ * 0.41} ${SZ * 0.18} Z`}
+        >
+          <LinearGradient
+            start={vec(SZ * 0.41, SZ * 0.08)}
+            end={vec(SZ * 0.59, SZ * 0.36)}
+            colors={['#3385FF', '#0142C0']}
+          />
+        </Path>
+        {/* Pin inner ring */}
+        <Circle cx={SZ * 0.50} cy={SZ * 0.18} r={SZ * 0.042}>
+          <Paint color="rgba(255,255,255,0.95)" />
+        </Circle>
+        <Circle cx={SZ * 0.50} cy={SZ * 0.18} r={SZ * 0.022}>
+          <Paint color="#0142C0" />
+        </Circle>
+
+        {/* Signal arcs */}
+        {[
+          { r: SZ * 0.095, op: 0.80, sw: 2.5 },
+          { r: SZ * 0.140, op: 0.50, sw: 2.0 },
+          { r: SZ * 0.185, op: 0.28, sw: 1.5 },
+        ].map(({ r, op, sw }, i) => (
+          <Path
+            key={i}
+            path={`M ${SZ * 0.59 + (r - SZ * 0.095)} ${SZ * 0.10}
+                   Q ${SZ * 0.62 + (r - SZ * 0.095) * 0.8} ${SZ * 0.18}
+                     ${SZ * 0.59 + (r - SZ * 0.095)} ${SZ * 0.26}`}
+          >
+            <Paint
+              color={`rgba(51,133,255,${op})`}
+              style="stroke"
+              strokeWidth={sw}
+              strokeCap="round"
+            />
+          </Path>
+        ))}
+
+        {/* Dashed connector to car */}
+        <Line p1={vec(SZ * 0.50, SZ * 0.37)} p2={vec(SZ * 0.50, SZ * 0.43)}>
+          <Paint color="rgba(255,255,255,0.28)" strokeWidth={1.8} strokeCap="round" />
+        </Line>
+      </Group>
+    </Canvas>
   );
 }
 
-// Slide 3 — Chat bubbles with AI spark
+// ─── Slide 3 — Support ───────────────────────────────────────────────────────
+
 export function SupportIllustration() {
-  const bubble1 = useDraw(300, 0, 700);
-  const bubble2 = useDraw(250, 400, 650);
-  const bubble3 = useDraw(200, 750, 600);
-  const spark = useDraw(150, 1000, 500);
-  const dots = useDraw(100, 500, 400);
+  const bg  = useEntrance(0, 600);
+  const b1  = useEntrance(100, 550);
+  const b2  = useEntrance(400, 550);
+  const b3  = useEntrance(680, 500);
+  const sp  = useEntrance(800, 500);
+
+  const cx = SZ / 2;
+  const cy = SZ / 2;
+
+  // Bubble 1 — user (left)
+  const b1X = SZ * 0.05;
+  const b1Y = SZ * 0.08;
+  const b1W = SZ * 0.66;
+  const b1H = SZ * 0.22;
+
+  // Bubble 2 — AI (right)
+  const b2X = SZ * 0.29;
+  const b2Y = SZ * 0.38;
+  const b2W = SZ * 0.66;
+  const b2H = SZ * 0.22;
+
+  // Bubble 3 — typing (left)
+  const b3X = SZ * 0.05;
+  const b3Y = SZ * 0.68;
+  const b3W = SZ * 0.36;
+  const b3H = SZ * 0.14;
 
   return (
-    <Svg width={W} height={H} viewBox="0 0 200 200">
-      {/* Left bubble 1 */}
-      <AnimatedPath
-        d="M20 55 Q20 45 30 45 L120 45 Q130 45 130 55 L130 75 Q130 85 120 85 L40 85 L30 95 L34 85 Q20 85 20 75 Z"
-        stroke={COLOR} strokeWidth={STROKE} fill="rgba(51,133,255,0.1)" strokeDasharray="300" animatedProps={bubble1}
-      />
-      <AnimatedPath d="M32 62 L118 62 M32 72 L88 72" stroke={DIM} strokeWidth={STROKE} strokeLinecap="round" strokeDasharray="300" animatedProps={bubble1} />
+    <Canvas style={{ width: SZ, height: SZ }}>
+      {/* ── Ambient blobs ── */}
+      <Group opacity={bg}>
+        <Circle cx={cx} cy={cy + SZ * 0.05} r={SZ * 0.40}>
+          <Paint color="rgba(51,133,255,0.32)">
+            <BlurMask blur={SZ * 0.16} style="normal" />
+          </Paint>
+        </Circle>
+        <Circle cx={SZ * 0.80} cy={SZ * 0.20} r={SZ * 0.22}>
+          <Paint color="rgba(107,53,240,0.30)">
+            <BlurMask blur={SZ * 0.12} style="normal" />
+          </Paint>
+        </Circle>
+        <Circle cx={SZ * 0.15} cy={SZ * 0.75} r={SZ * 0.16}>
+          <Paint color="rgba(1,66,192,0.25)">
+            <BlurMask blur={SZ * 0.10} style="normal" />
+          </Paint>
+        </Circle>
+      </Group>
 
-      {/* Right bubble 2 — AI response */}
-      <AnimatedPath
-        d="M180 105 Q180 95 170 95 L70 95 Q60 95 60 105 L60 125 Q60 135 70 135 L160 135 L170 145 L166 135 Q180 135 180 125 Z"
-        stroke={COLOR} strokeWidth={STROKE} fill="rgba(51,133,255,0.18)" strokeDasharray="250" animatedProps={bubble2}
-      />
-      <AnimatedPath d="M72 112 L168 112 M72 122 L130 122" stroke={COLOR} strokeWidth={STROKE * 0.8} strokeLinecap="round" strokeDasharray="250" animatedProps={bubble2} />
+      {/* ── Bubble 1 — user ── */}
+      <Group opacity={b1}>
+        {/* Shadow */}
+        <RoundedRect x={b1X} y={b1Y} width={b1W} height={b1H} r={SZ * 0.045}>
+          <Paint color="rgba(1,66,192,0.20)">
+            <BlurMask blur={10} style="normal" />
+          </Paint>
+        </RoundedRect>
+        {/* Body */}
+        <RoundedRect x={b1X} y={b1Y} width={b1W} height={b1H} r={SZ * 0.045}>
+          <LinearGradient
+            start={vec(b1X, b1Y)}
+            end={vec(b1X, b1Y + b1H)}
+            colors={['rgba(13,26,60,0.97)', 'rgba(8,18,45,0.97)']}
+          />
+        </RoundedRect>
+        <RoundedRect x={b1X} y={b1Y} width={b1W} height={b1H} r={SZ * 0.045}>
+          <Paint color="rgba(255,255,255,0.10)" style="stroke" strokeWidth={1} />
+        </RoundedRect>
+        {/* Tail (bottom-left) */}
+        <Path path={`M ${b1X + SZ * 0.06} ${b1Y + b1H} L ${b1X + SZ * 0.02} ${b1Y + b1H + SZ * 0.05} L ${b1X + SZ * 0.16} ${b1Y + b1H}`}>
+          <LinearGradient
+            start={vec(b1X, b1Y + b1H)}
+            end={vec(b1X, b1Y + b1H + SZ * 0.05)}
+            colors={['rgba(8,18,45,0.97)', 'rgba(8,18,45,0)']}
+          />
+        </Path>
+        {/* Text lines */}
+        <Line p1={vec(b1X + SZ * 0.08, b1Y + b1H * 0.38)} p2={vec(b1X + b1W - SZ * 0.08, b1Y + b1H * 0.38)}>
+          <Paint color="rgba(255,255,255,0.60)" strokeWidth={2.5} strokeCap="round" />
+        </Line>
+        <Line p1={vec(b1X + SZ * 0.08, b1Y + b1H * 0.65)} p2={vec(b1X + b1W * 0.60, b1Y + b1H * 0.65)}>
+          <Paint color="rgba(255,255,255,0.35)" strokeWidth={2} strokeCap="round" />
+        </Line>
+      </Group>
 
-      {/* Left bubble 3 — typing */}
-      <AnimatedPath
-        d="M20 150 Q20 140 30 140 L90 140 Q100 140 100 150 L100 165 Q100 175 90 175 L40 175 L30 183 L34 175 Q20 175 20 165 Z"
-        stroke={DIM} strokeWidth={STROKE} fill="none" strokeDasharray="200" animatedProps={bubble3}
-      />
-      {/* Typing dots */}
-      <AnimatedCircle cx="42" cy="157" r="3" stroke={COLOR} strokeWidth={STROKE} fill="none" strokeDasharray="100" animatedProps={dots} />
-      <AnimatedCircle cx="57" cy="157" r="3" stroke={COLOR} strokeWidth={STROKE} fill="none" strokeDasharray="100" animatedProps={dots} />
-      <AnimatedCircle cx="72" cy="157" r="3" stroke={COLOR} strokeWidth={STROKE} fill="none" strokeDasharray="100" animatedProps={dots} />
+      {/* ── Bubble 2 — AI response ── */}
+      <Group opacity={b2}>
+        {/* Glow */}
+        <RoundedRect x={b2X} y={b2Y} width={b2W} height={b2H} r={SZ * 0.045}>
+          <Paint color="rgba(51,133,255,0.18)">
+            <BlurMask blur={12} style="normal" />
+          </Paint>
+        </RoundedRect>
+        {/* Body */}
+        <RoundedRect x={b2X} y={b2Y} width={b2W} height={b2H} r={SZ * 0.045}>
+          <LinearGradient
+            start={vec(b2X, b2Y)}
+            end={vec(b2X + b2W, b2Y + b2H)}
+            colors={['rgba(0,60,180,0.95)', 'rgba(0,30,100,0.95)']}
+          />
+        </RoundedRect>
+        <RoundedRect x={b2X} y={b2Y} width={b2W} height={b2H} r={SZ * 0.045}>
+          <Paint color="rgba(100,160,255,0.30)" style="stroke" strokeWidth={1} />
+        </RoundedRect>
+        {/* Tail (bottom-right) */}
+        <Path path={`M ${b2X + b2W - SZ * 0.16} ${b2Y + b2H} L ${b2X + b2W + SZ * 0.02} ${b2Y + b2H + SZ * 0.05} L ${b2X + b2W - SZ * 0.06} ${b2Y + b2H}`}>
+          <LinearGradient
+            start={vec(b2X + b2W, b2Y + b2H)}
+            end={vec(b2X + b2W, b2Y + b2H + SZ * 0.05)}
+            colors={['rgba(0,30,100,0.95)', 'rgba(0,30,100,0)']}
+          />
+        </Path>
+        {/* Text lines */}
+        <Line p1={vec(b2X + SZ * 0.08, b2Y + b2H * 0.38)} p2={vec(b2X + b2W - SZ * 0.08, b2Y + b2H * 0.38)}>
+          <Paint color="rgba(255,255,255,0.85)" strokeWidth={2.5} strokeCap="round" />
+        </Line>
+        <Line p1={vec(b2X + SZ * 0.08, b2Y + b2H * 0.65)} p2={vec(b2X + b2W * 0.68, b2Y + b2H * 0.65)}>
+          <Paint color="rgba(255,255,255,0.55)" strokeWidth={2} strokeCap="round" />
+        </Line>
+      </Group>
 
-      {/* AI spark top right */}
-      <AnimatedPath
-        d="M160 30 L163 38 L171 41 L163 44 L160 52 L157 44 L149 41 L157 38 Z"
-        stroke={COLOR} strokeWidth={STROKE} fill="rgba(51,133,255,0.2)" strokeLinejoin="round" strokeDasharray="150" animatedProps={spark}
-      />
-      <AnimatedPath d="M148 22 L150 26 L154 28 L150 30 L148 34 L146 30 L142 28 L146 26 Z" stroke={DIM} strokeWidth={STROKE * 0.8} fill="none" strokeLinejoin="round" strokeDasharray="80" animatedProps={spark} />
-    </Svg>
+      {/* ── Bubble 3 — typing ── */}
+      <Group opacity={b3}>
+        <RoundedRect x={b3X} y={b3Y} width={b3W} height={b3H} r={SZ * 0.035}>
+          <LinearGradient
+            start={vec(b3X, b3Y)}
+            end={vec(b3X, b3Y + b3H)}
+            colors={['rgba(13,26,60,0.90)', 'rgba(8,18,45,0.90)']}
+          />
+        </RoundedRect>
+        <RoundedRect x={b3X} y={b3Y} width={b3W} height={b3H} r={SZ * 0.035}>
+          <Paint color="rgba(255,255,255,0.08)" style="stroke" strokeWidth={1} />
+        </RoundedRect>
+        {/* Typing dots */}
+        {[0, SZ * 0.08, SZ * 0.16].map((offset, i) => (
+          <Circle key={i} cx={b3X + b3W * 0.22 + offset} cy={b3Y + b3H * 0.52} r={SZ * 0.024}>
+            <Paint color={`rgba(51,133,255,${1 - i * 0.28})`} />
+          </Circle>
+        ))}
+        {/* Tail */}
+        <Path path={`M ${b3X + SZ * 0.06} ${b3Y + b3H} L ${b3X + SZ * 0.02} ${b3Y + b3H + SZ * 0.04} L ${b3X + SZ * 0.14} ${b3Y + b3H}`}>
+          <LinearGradient
+            start={vec(b3X, b3Y + b3H)}
+            end={vec(b3X, b3Y + b3H + SZ * 0.04)}
+            colors={['rgba(8,18,45,0.90)', 'rgba(8,18,45,0)']}
+          />
+        </Path>
+      </Group>
+
+      {/* ── AI sparkle ── */}
+      <Group opacity={sp}>
+        {/* Outer glow */}
+        <Circle cx={SZ * 0.78} cy={SZ * 0.16} r={SZ * 0.09}>
+          <Paint color="rgba(51,133,255,0.35)">
+            <BlurMask blur={12} style="normal" />
+          </Paint>
+        </Circle>
+        {/* Large star */}
+        <Path
+          path={`M ${SZ * 0.78} ${SZ * 0.07}
+                 L ${SZ * 0.808} ${SZ * 0.138}
+                 L ${SZ * 0.876} ${SZ * 0.16}
+                 L ${SZ * 0.808} ${SZ * 0.182}
+                 L ${SZ * 0.78} ${SZ * 0.25}
+                 L ${SZ * 0.752} ${SZ * 0.182}
+                 L ${SZ * 0.684} ${SZ * 0.16}
+                 L ${SZ * 0.752} ${SZ * 0.138} Z`}
+        >
+          <LinearGradient
+            start={vec(SZ * 0.684, SZ * 0.07)}
+            end={vec(SZ * 0.876, SZ * 0.25)}
+            colors={['rgba(100,180,255,0.95)', 'rgba(1,66,192,0.95)']}
+          />
+        </Path>
+        {/* Small star */}
+        <Path
+          path={`M ${SZ * 0.66} ${SZ * 0.10}
+                 L ${SZ * 0.674} ${SZ * 0.128}
+                 L ${SZ * 0.702} ${SZ * 0.136}
+                 L ${SZ * 0.674} ${SZ * 0.144}
+                 L ${SZ * 0.66} ${SZ * 0.172}
+                 L ${SZ * 0.646} ${SZ * 0.144}
+                 L ${SZ * 0.618} ${SZ * 0.136}
+                 L ${SZ * 0.646} ${SZ * 0.128} Z`}
+        >
+          <Paint color="rgba(255,255,255,0.55)" />
+        </Path>
+      </Group>
+    </Canvas>
   );
 }
 
-// Vehicle setup — Ford car silhouette (side view)
+// ─── Vehicle setup — Car silhouette (SVG, animated draw-on) ──────────────────
+
+const AnimatedSvgPath   = Animated.createAnimatedComponent(SvgPath);
+const AnimatedSvgCircle = Animated.createAnimatedComponent(SvgCircle);
+const AnimatedSvgRect   = Animated.createAnimatedComponent(SvgRect);
+const AnimatedSvgLine   = Animated.createAnimatedComponent(SvgLine);
+
+const BLUE_S  = '#3385FF';
+const WHITE_S = 'rgba(255,255,255,0.90)';
+const WHITE2_S = 'rgba(255,255,255,0.35)';
+const GLOW_S  = 'rgba(51,133,255,0.30)';
+const FILL1_S = 'rgba(1,66,192,0.28)';
+
+function useDraw(len: number, delay = 0, dur = 800) {
+  const sv = useSharedValue(len);
+  useEffect(() => {
+    sv.value = withDelay(delay, withTiming(0, { duration: dur, easing: Easing.out(Easing.cubic) }));
+  }, []);
+  return useAnimatedProps(() => ({ strokeDashoffset: sv.value }));
+}
+
+function useFillSvg(delay = 0, dur = 600) {
+  const sv = useSharedValue(0);
+  useEffect(() => {
+    sv.value = withDelay(delay, withTiming(1, { duration: dur, easing: Easing.out(Easing.quad) }));
+  }, []);
+  return useAnimatedProps(() => ({ fillOpacity: sv.value }));
+}
+
 export function CarSilhouette() {
-  const body = useDraw(800, 0, 1200);
-  const windows = useDraw(300, 600, 700);
-  const wheels = useDraw(250, 900, 600);
-  const details = useDraw(200, 1100, 500);
+  const glow    = useFillSvg(0, 800);
+  const body    = useDraw(900, 0, 1200);
+  const winFill = useFillSvg(600, 600);
+  const wheels  = useDraw(300, 900, 700);
+  const details = useDraw(250, 1100, 600);
+  const ground  = useDraw(900, 200, 1000);
+
+  const W2 = SZ;
+  const H2 = SZ * 0.52;
 
   return (
-    <Svg width={W} height={W * 0.5} viewBox="0 0 300 150">
-      {/* Car body */}
-      <AnimatedPath
-        d="M20 100 L20 80 Q22 65 40 60 L90 48 Q110 38 140 36 L180 36 Q210 38 230 48 L260 60 Q278 65 280 80 L280 100 Z"
-        stroke={COLOR} strokeWidth={STROKE * 1.2} fill="rgba(51,133,255,0.07)" strokeDasharray="800" animatedProps={body}
-      />
-      {/* Roof line */}
-      <AnimatedPath
-        d="M80 60 Q100 36 140 32 L180 32 Q215 34 240 60"
-        stroke={COLOR} strokeWidth={STROKE * 1.2} fill="none" strokeDasharray="800" animatedProps={body}
-      />
-      {/* Windshield */}
-      <AnimatedPath d="M100 60 L112 36 L162 36 L162 60 Z" stroke={COLOR} strokeWidth={STROKE} fill="rgba(51,133,255,0.15)" strokeDasharray="300" animatedProps={windows} />
-      {/* Rear window */}
-      <AnimatedPath d="M168 60 L178 36 L220 36 L235 60 Z" stroke={COLOR} strokeWidth={STROKE} fill="rgba(51,133,255,0.15)" strokeDasharray="300" animatedProps={windows} />
-      {/* Door line */}
-      <AnimatedPath d="M163 60 L163 98" stroke={DIM} strokeWidth={STROKE} strokeDasharray="200" animatedProps={details} />
-      {/* Handle */}
-      <AnimatedPath d="M175 80 L190 80" stroke={COLOR} strokeWidth={STROKE * 1.5} strokeLinecap="round" strokeDasharray="200" animatedProps={details} />
-      {/* Front wheel */}
-      <AnimatedCircle cx="80" cy="104" r="22" stroke={COLOR} strokeWidth={STROKE * 1.2} fill="rgba(2,8,18,0.9)" strokeDasharray="250" animatedProps={wheels} />
-      <AnimatedCircle cx="80" cy="104" r="10" stroke={DIM} strokeWidth={STROKE} fill="none" strokeDasharray="200" animatedProps={wheels} />
-      <AnimatedCircle cx="80" cy="104" r="4" stroke={COLOR} strokeWidth={STROKE} fill="none" strokeDasharray="100" animatedProps={wheels} />
-      {/* Rear wheel */}
-      <AnimatedCircle cx="222" cy="104" r="22" stroke={COLOR} strokeWidth={STROKE * 1.2} fill="rgba(2,8,18,0.9)" strokeDasharray="250" animatedProps={wheels} />
-      <AnimatedCircle cx="222" cy="104" r="10" stroke={DIM} strokeWidth={STROKE} fill="none" strokeDasharray="200" animatedProps={wheels} />
-      <AnimatedCircle cx="222" cy="104" r="4" stroke={COLOR} strokeWidth={STROKE} fill="none" strokeDasharray="100" animatedProps={wheels} />
-      {/* Ground line */}
-      <AnimatedPath d="M10 126 L290 126" stroke={DIM} strokeWidth={STROKE * 0.8} strokeDasharray="800" animatedProps={body} />
-      {/* Headlight */}
-      <AnimatedPath d="M278 72 L285 68 M278 78 L286 78 M278 84 L285 88" stroke={COLOR} strokeWidth={STROKE} strokeLinecap="round" strokeDasharray="200" animatedProps={details} />
+    <Svg width={W2} height={H2} viewBox="0 0 300 156">
+      <AnimatedSvgCircle cx="150" cy="128" r="100" fill={GLOW_S} animatedProps={glow} stroke="none" />
+      <AnimatedSvgPath d="M8 128 L292 128"
+        stroke={WHITE2_S} strokeWidth="1.5" strokeDasharray="900" animatedProps={ground} />
+      <AnimatedSvgPath
+        d="M18 100 L18 78 Q20 62 40 56 L90 44 Q112 36 144 34 L184 34 Q214 36 236 46 L266 58 Q284 64 286 80 L286 100 Z"
+        stroke={BLUE_S} strokeWidth="3.5" fill={FILL1_S}
+        strokeDasharray="900" animatedProps={body} />
+      <AnimatedSvgPath d="M76 56 Q98 32 142 28 L184 28 Q220 30 246 56"
+        stroke={BLUE_S} strokeWidth="3.5" fill="none"
+        strokeDasharray="900" animatedProps={body} />
+      <AnimatedSvgRect x="96" y="34" width="72" height="26" rx="4"
+        fill="rgba(51,133,255,0.22)" fillOpacity={0} stroke="none"
+        animatedProps={winFill} />
+      <AnimatedSvgPath d="M98 56 L110 32 L166 32 L166 56 Z"
+        stroke={BLUE_S} strokeWidth="2.5" fill="none"
+        strokeDasharray="300" animatedProps={body} />
+      <AnimatedSvgRect x="168" y="34" width="68" height="22" rx="4"
+        fill="rgba(51,133,255,0.22)" fillOpacity={0} stroke="none"
+        animatedProps={winFill} />
+      <AnimatedSvgPath d="M168 56 L178 32 L224 32 L240 56 Z"
+        stroke={BLUE_S} strokeWidth="2.5" fill="none"
+        strokeDasharray="300" animatedProps={body} />
+      <AnimatedSvgLine x1="167" y1="34" x2="167" y2="100"
+        stroke={WHITE2_S} strokeWidth="2"
+        strokeDasharray="250" animatedProps={details} />
+      <AnimatedSvgLine x1="182" y1="72" x2="200" y2="72"
+        stroke={WHITE_S} strokeWidth="3.5" strokeLinecap="round"
+        strokeDasharray="250" animatedProps={details} />
+      <AnimatedSvgCircle cx="78" cy="106" r="24"
+        stroke={BLUE_S} strokeWidth="3.5" fill="rgba(2,8,18,0.92)"
+        strokeDasharray="300" animatedProps={wheels} />
+      <AnimatedSvgCircle cx="78" cy="106" r="11"
+        stroke={WHITE2_S} strokeWidth="2" fill="none"
+        strokeDasharray="200" animatedProps={wheels} />
+      <AnimatedSvgCircle cx="78" cy="106" r="4"
+        fill={BLUE_S} stroke="none" strokeDasharray="50" animatedProps={wheels} />
+      <AnimatedSvgCircle cx="224" cy="106" r="24"
+        stroke={BLUE_S} strokeWidth="3.5" fill="rgba(2,8,18,0.92)"
+        strokeDasharray="300" animatedProps={wheels} />
+      <AnimatedSvgCircle cx="224" cy="106" r="11"
+        stroke={WHITE2_S} strokeWidth="2" fill="none"
+        strokeDasharray="200" animatedProps={wheels} />
+      <AnimatedSvgCircle cx="224" cy="106" r="4"
+        fill={BLUE_S} stroke="none" strokeDasharray="50" animatedProps={wheels} />
+      <AnimatedSvgPath d="M284 68 L294 62 M284 76 L295 76 M284 84 L294 90"
+        stroke={BLUE_S} strokeWidth="3" strokeLinecap="round"
+        strokeDasharray="250" animatedProps={details} />
+      <AnimatedSvgPath d="M16 70 L6 70 M16 80 L5 80"
+        stroke="rgba(229,57,53,0.7)" strokeWidth="3" strokeLinecap="round"
+        strokeDasharray="250" animatedProps={details} />
     </Svg>
   );
 }

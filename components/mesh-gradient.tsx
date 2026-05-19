@@ -10,6 +10,9 @@ import Animated, {
   withTiming,
   type SharedValue,
 } from 'react-native-reanimated';
+import Svg, { Defs, Ellipse, RadialGradient, Stop } from 'react-native-svg';
+
+import { Colors } from '@/constants/theme';
 
 const { width, height } = Dimensions.get('window');
 
@@ -55,13 +58,24 @@ function Blob({ blob, gyroTiltX, gyroTiltY }: {
   });
 
   return (
-    <Animated.View
-      style={[styles.blob, style, {
-        width: blob.w,
-        height: blob.h,
-        backgroundColor: blob.color,
-      }]}
-    />
+    <Animated.View style={[styles.blob, style, { width: blob.w, height: blob.h }]}>
+      <Svg width={blob.w} height={blob.h} style={StyleSheet.absoluteFill}>
+        <Defs>
+          <RadialGradient id={`grad-${blob.id}`} cx="50%" cy="50%" r="50%">
+            <Stop offset="0%"   stopColor={blob.color} stopOpacity="0.82" />
+            <Stop offset="60%"  stopColor={blob.color} stopOpacity="0.35" />
+            <Stop offset="100%" stopColor={blob.color} stopOpacity="0" />
+          </RadialGradient>
+        </Defs>
+        <Ellipse
+          cx={blob.w / 2}
+          cy={blob.h / 2}
+          rx={blob.w / 2}
+          ry={blob.h / 2}
+          fill={`url(#grad-${blob.id})`}
+        />
+      </Svg>
+    </Animated.View>
   );
 }
 
@@ -84,13 +98,10 @@ export function MeshGradient({ style, gyroTiltX, gyroTiltY }: MeshGradientProps)
 const styles = StyleSheet.create({
   root: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: '#020812',
+    backgroundColor: Colors.surface,
     overflow: 'hidden',
   },
   blob: {
     position: 'absolute',
-    borderRadius: 999,
-    opacity: 0.85,
-    filter: 'blur(80px)',
   },
 });

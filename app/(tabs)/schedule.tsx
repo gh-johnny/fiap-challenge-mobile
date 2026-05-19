@@ -22,8 +22,12 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { AnimatedButton } from '@/components/animated-button';
 import { MeshGradient } from '@/components/mesh-gradient';
+import { MonthlyBarChart, ServiceTypeChart } from '@/components/service-history-chart';
 import { Colors, Radius, Spacing, Typography } from '@/constants/theme';
+import { addServiceToCalendar } from '@/services/calendarService';
 import { Appointment, ServiceType, useServiceStore } from '@/store/service';
+import { openRouteToDealer } from '@/utils/maps';
+import { groupByMonth, groupByType } from '@/utils/serviceHistory';
 
 const SERVICE_TYPES: ServiceType[] = [
   'Oil Change',
@@ -108,6 +112,17 @@ function AppointmentCard({ appt }: { appt: Appointment }) {
           {appt.date} · {appt.time} · {appt.dealer}
         </Text>
         {appt.notes ? <Text style={styles.apptNotes}>{appt.notes}</Text> : null}
+        {appt.status === 'upcoming' && (
+          <Pressable
+            style={({ pressed }) => [styles.routeBtn, pressed && { opacity: 0.7 }]}
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              openRouteToDealer(appt.dealer);
+            }}
+          >
+            <Text style={styles.routeBtnText}>📍 Traçar Rota</Text>
+          </Pressable>
+        )}
       </View>
     </Animated.View>
   );
@@ -118,6 +133,7 @@ function BookingModal({ visible, onClose }: { visible: boolean; onClose: () => v
   const [selectedType, setSelectedType] = useState<ServiceType | null>(null);
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
+  const [calendarAdded, setCalendarAdded] = useState(false);
   const addAppointment = useServiceStore((s) => s.addAppointment);
 
   const scaleY = useSharedValue(0);
@@ -142,7 +158,7 @@ function BookingModal({ visible, onClose }: { visible: boolean; onClose: () => v
     opacity: opacity.value,
   }));
 
-  function confirm() {
+  async function confirm() {
     if (!selectedType || !selectedDate || !selectedTime) return;
     addAppointment({
       type: selectedType,
@@ -152,6 +168,13 @@ function BookingModal({ visible, onClose }: { visible: boolean; onClose: () => v
       status: 'upcoming',
     });
     scheduleReminder(selectedType, selectedDate, selectedTime);
+    const added = await addServiceToCalendar({
+      type: selectedType,
+      date: selectedDate,
+      time: selectedTime,
+      dealer: 'Ford Morumbi',
+    });
+    setCalendarAdded(added);
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     setStep('done');
   }
@@ -174,6 +197,11 @@ function BookingModal({ visible, onClose }: { visible: boolean; onClose: () => v
                   <View style={styles.reminderBadge}>
                     <Text style={styles.reminderText}>🔔 Lembrete agendado para 1 dia antes</Text>
                   </View>
+                  {calendarAdded && (
+                    <View style={styles.calendarBadge}>
+                      <Text style={styles.reminderText}>📅 Added to Calendar</Text>
+                    </View>
+                  )}
                   <AnimatedButton label="Close" onPress={onClose} style={styles.doneBtn} />
                 </View>
               ) : (
@@ -337,6 +365,21 @@ export default function ScheduleScreen() {
             </>
           )}
 
+          {/* Service history charts */}
+          {appointments.length > 0 && (
+            <>
+              <Text style={[styles.sectionTitle, { marginTop: Spacing.md }]}>HISTORY — BY MONTH</Text>
+              <View style={styles.chartCard}>
+                <MonthlyBarChart data={groupByMonth(appointments)} />
+              </View>
+
+              <Text style={styles.sectionTitle}>HISTORY — BY SERVICE</Text>
+              <View style={styles.chartCard}>
+                <ServiceTypeChart data={groupByType(appointments)} />
+              </View>
+            </>
+          )}
+
           <View style={{ height: 110 }} />
         </ScrollView>
       </SafeAreaView>
@@ -394,6 +437,17 @@ const styles = StyleSheet.create({
   apptBadgeText: { fontSize: 11, fontWeight: '600', textTransform: 'capitalize' },
   apptMeta: { color: Colors.muted, fontSize: 12, marginTop: 2 },
   apptNotes: { color: Colors.mutedLight, fontSize: 12, marginTop: 4, fontStyle: 'italic' },
+  routeBtn: {
+    alignSelf: 'flex-start',
+    marginTop: Spacing.sm,
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: 4,
+    borderRadius: Radius.pill,
+    borderWidth: 1,
+    borderColor: 'rgba(1,66,192,0.4)',
+    backgroundColor: 'rgba(1,66,192,0.1)',
+  },
+  routeBtnText: { color: Colors.mutedLight, fontSize: 12, fontWeight: '600' },
   emptyCard: {
     backgroundColor: 'rgba(13,21,38,0.6)',
     borderRadius: Radius.xl,
@@ -486,4 +540,17 @@ const styles = StyleSheet.create({
   },
   reminderText: { color: Colors.mutedLight, fontSize: 13, fontWeight: '500' },
   doneBtn: { width: '100%', marginTop: Spacing.sm },
+  calendarBadge: {
+    backgroundColor: 'rgba(0,200,83,0.15)',
+    borderWidth: 1,
+    borderColor: 'rgba(0,200,83,0.35)',
+    borderRadius: Radius.lg,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.sm,
+  },
+  chartCard: {
+    backgroundColor: 'rgba(13,21,38,0.8)',
+    borderRadius: Radius.lg, padding: Spacing.lg,
+    borderWidth: 1, borderColor: Colors.border, marginBottom: Spacing.md,
+  },
 });

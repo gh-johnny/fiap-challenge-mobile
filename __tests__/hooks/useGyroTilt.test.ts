@@ -71,4 +71,20 @@ describe('useGyroTilt — rotation handling', () => {
     expect(result.current.tiltX.value).toBe(0);
     expect(result.current.tiltY.value).toBe(0);
   });
+
+  it('updates tiltX and tiltY when rotation data is received', () => {
+    const { result } = renderHook(() => useGyroTilt(true));
+    const listener = getListener();
+    listener({ rotation: { beta: 0.5, gamma: -0.3 } });
+    expect(result.current.tiltX.value).not.toBe(0);
+    expect(result.current.tiltY.value).not.toBe(0);
+  });
+
+  it('clamps tiltX and tiltY to [-1, 1] for extreme values', () => {
+    const { result } = renderHook(() => useGyroTilt(true));
+    const listener = getListener();
+    listener({ rotation: { beta: 999, gamma: -999 } });
+    expect(result.current.tiltX.value).toBe(1);
+    expect(result.current.tiltY.value).toBe(-1);
+  });
 });

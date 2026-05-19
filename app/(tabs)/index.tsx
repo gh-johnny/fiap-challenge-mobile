@@ -1,7 +1,9 @@
 import * as Haptics from 'expo-haptics';
 import * as Notifications from 'expo-notifications';
+import { BlurView } from 'expo-blur';
+import { Ionicons } from '@expo/vector-icons';
 import { useCallback, useEffect, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
+import { Platform, Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
 import Animated, {
   Easing,
   useAnimatedStyle,
@@ -16,19 +18,27 @@ import { MeshGradient } from '@/components/mesh-gradient';
 import { SosModal } from '@/components/sos-modal';
 import { VehicleCard3D } from '@/components/vehicle-card-3d';
 import { Colors, Radius, Spacing, Typography } from '@/constants/theme';
+import { useBarometerAdvisor } from '@/hooks/useBarometerAdvisor';
+import { useCrashDetector } from '@/hooks/useCrashDetector';
 import { useGyroTilt } from '@/hooks/useGyroTilt';
 import { useShakeDetector } from '@/hooks/useShakeDetector';
 import { useAuthStore } from '@/store/auth';
 import { useSosStore } from '@/store/sos';
 
-function QuickAction({ icon, label, onPress }: { icon: string; label: string; onPress?: () => void }) {
+function QuickAction({ icon, label, onPress }: { icon: React.ComponentProps<typeof Ionicons>['name']; label: string; onPress?: () => void }) {
   return (
     <Pressable
-      style={({ pressed }) => [styles.actionCard, pressed && { opacity: 0.8, transform: [{ scale: 0.96 }] }]}
+      style={({ pressed }) => [styles.actionCard, pressed && { opacity: 0.75, transform: [{ scale: 0.95 }] }]}
       onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); onPress?.(); }}
     >
-      <Text style={styles.actionIcon}>{icon}</Text>
-      <Text style={styles.actionLabel}>{label}</Text>
+      <BlurView
+        intensity={Platform.OS === 'android' ? 0 : 40}
+        tint="dark"
+        style={[styles.actionBlur, Platform.OS === 'android' && { backgroundColor: 'rgba(13,21,38,0.85)' }]}
+      >
+        <Ionicons name={icon} size={26} color={Colors.mutedLight} />
+        <Text style={styles.actionLabel}>{label}</Text>
+      </BlurView>
     </Pressable>
   );
 }
@@ -47,6 +57,7 @@ export default function HomeScreen() {
   const firstName = user?.name?.split(' ')[0] ?? 'Driver';
   const { isAssistModeOn, toggleAssistMode, persistentNotifId, setPersistentNotifId } = useSosStore();
   const { tiltX, tiltY } = useGyroTilt();
+  const { pressure, alert: baroAlert } = useBarometerAdvisor();
   const [sosVisible, setSosVisible] = useState(false);
 
   const handleShake = useCallback(() => {
@@ -55,6 +66,10 @@ export default function HomeScreen() {
   }, []);
 
   useShakeDetector(handleShake, isAssistModeOn);
+  useCrashDetector(useCallback(() => {
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+    setSosVisible(true);
+  }, []), isAssistModeOn);
 
   useEffect(() => {
     if (isAssistModeOn) {
@@ -145,10 +160,34 @@ export default function HomeScreen() {
             {/* Quick actions */}
             <Text style={styles.sectionTitle}>QUICK ACTIONS</Text>
             <View style={styles.actionsRow}>
-              <QuickAction icon="🗓️" label="Book Service" />
-              <QuickAction icon="💬" label="Get Support" />
-              <QuickAction icon="📋" label="History" />
+              <QuickAction icon="calendar-outline" label="Book Service" />
+              <QuickAction icon="chatbubble-ellipses-outline" label="Get Support" />
+              <QuickAction icon="document-text-outline" label="History" />
             </View>
+
+            {/* Barometer advisory */}
+            {baroAlert && (
+              <View style={[
+                styles.baroCard,
+                baroAlert.type === 'storm'    && styles.baroCardStorm,
+                baroAlert.type === 'altitude' && styles.baroCardAltitude,
+              ]}>
+                <Text style={styles.baroIcon}>
+                  {baroAlert.type === 'rain' ? '🌧️' : baroAlert.type === 'storm' ? '⛈️' : '🏔️'}
+                </Text>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.baroTitle}>
+                    {baroAlert.type === 'rain' ? 'Rain Advisory'
+                      : baroAlert.type === 'storm' ? 'Storm Warning'
+                      : 'High Altitude'}
+                  </Text>
+                  <Text style={styles.baroMessage}>{baroAlert.message}</Text>
+                  {pressure != null && (
+                    <Text style={styles.baroPressure}>{pressure.toFixed(1)} hPa</Text>
+                  )}
+                </View>
+              </View>
+            )}
 
             {/* Ford Assist toggle */}
             <Text style={styles.sectionTitle}>ASSISTÊNCIA</Text>
@@ -244,15 +283,16 @@ const styles = StyleSheet.create({
   actionsRow: { flexDirection: 'row', gap: Spacing.sm },
   actionCard: {
     flex: 1,
-    backgroundColor: 'rgba(13,21,38,0.8)',
     borderRadius: Radius.lg,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.12)',
+  },
+  actionBlur: {
     padding: Spacing.md,
     alignItems: 'center',
     gap: Spacing.sm,
-    borderWidth: 1,
-    borderColor: Colors.border,
   },
-  actionIcon: { fontSize: 28 },
   actionLabel: { color: Colors.mutedLight, fontSize: 11, fontWeight: '600', textAlign: 'center' },
   assistCard: {
     backgroundColor: 'rgba(13,21,38,0.8)',
@@ -294,4 +334,25 @@ const styles = StyleSheet.create({
     ...Typography.caption,
     marginTop: 2,
   },
+
+  // Barometer advisory card
+  baroCard: {
+    flexDirection: 'row', alignItems: 'flex-start', gap: Spacing.md,
+    backgroundColor: 'rgba(1,66,192,0.12)',
+    borderRadius: Radius.lg, padding: Spacing.md,
+    borderWidth: 1, borderColor: 'rgba(1,66,192,0.35)',
+    marginBottom: Spacing.md,
+  },
+  baroCardStorm: {
+    backgroundColor: 'rgba(229,57,53,0.1)',
+    borderColor: 'rgba(229,57,53,0.35)',
+  },
+  baroCardAltitude: {
+    backgroundColor: 'rgba(255,179,0,0.1)',
+    borderColor: 'rgba(255,179,0,0.35)',
+  },
+  baroIcon: { fontSize: 28, marginTop: 2 },
+  baroTitle: { color: Colors.white, fontWeight: '700', fontSize: 14, marginBottom: 3 },
+  baroMessage: { color: Colors.mutedLight, fontSize: 12, lineHeight: 18 },
+  baroPressure: { color: Colors.muted, fontSize: 10, marginTop: 4, fontWeight: '600' },
 });

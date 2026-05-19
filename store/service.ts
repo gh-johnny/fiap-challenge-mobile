@@ -1,4 +1,6 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { create } from 'zustand';
+import { createJSONStorage, persist } from 'zustand/middleware';
 
 export type ServiceStatus = 'upcoming' | 'completed' | 'cancelled';
 export type ServiceType = 'Oil Change' | 'Tire Rotation' | 'Brake Inspection' | 'General Check' | 'Battery Check' | 'AC Service';
@@ -47,19 +49,28 @@ const SEED: Appointment[] = [
   },
 ];
 
-export const useServiceStore = create<ServiceState>((set) => ({
-  appointments: SEED,
-  addAppointment: (appt) =>
-    set((s) => ({
-      appointments: [
-        { ...appt, id: Date.now().toString() },
-        ...s.appointments,
-      ],
-    })),
-  cancelAppointment: (id) =>
-    set((s) => ({
-      appointments: s.appointments.map((a) =>
-        a.id === id ? { ...a, status: 'cancelled' } : a
-      ),
-    })),
-}));
+export const useServiceStore = create<ServiceState>()(
+  persist(
+    (set) => ({
+      appointments: SEED,
+      addAppointment: (appt) =>
+        set((s) => ({
+          appointments: [
+            { ...appt, id: `${Date.now()}-${Math.random().toString(36).slice(2, 7)}` },
+            ...s.appointments,
+          ],
+        })),
+      cancelAppointment: (id) =>
+        set((s) => ({
+          appointments: s.appointments.map((a) =>
+            a.id === id ? { ...a, status: 'cancelled' } : a
+          ),
+        })),
+    }),
+    {
+      name: 'ford-service',
+      storage: createJSONStorage(() => AsyncStorage),
+      partialize: (s) => ({ appointments: s.appointments }),
+    },
+  ),
+);

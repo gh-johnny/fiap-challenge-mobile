@@ -1,12 +1,6 @@
 import { sendMessage } from '../../services/chat';
 
-// ── Mock mode (no EXPO_PUBLIC_API_URL) ────────────────────────────────────────
-
-describe('sendMessage — mock mode', () => {
-  beforeAll(() => {
-    delete process.env.EXPO_PUBLIC_API_URL;
-  });
-
+describe('sendMessage', () => {
   it('returns a response object with text', async () => {
     const res = await sendMessage('hello');
     expect(res).toHaveProperty('text');
@@ -95,71 +89,3 @@ describe('sendMessage — mock mode', () => {
   });
 });
 
-// ── Backend mode (EXPO_PUBLIC_API_URL set) ────────────────────────────────────
-
-describe('sendMessage — backend mode', () => {
-  const MOCK_URL = 'https://api.ford-test.com';
-
-  beforeEach(() => {
-    process.env.EXPO_PUBLIC_API_URL = MOCK_URL;
-    global.fetch = jest.fn();
-  });
-
-  afterEach(() => {
-    delete process.env.EXPO_PUBLIC_API_URL;
-    jest.restoreAllMocks();
-  });
-
-  it('calls fetch with POST method', async () => {
-    (global.fetch as jest.Mock).mockResolvedValueOnce({
-      ok: true,
-      json: async () => ({ text: 'Backend response' }),
-    });
-    await sendMessage('hello');
-    expect(global.fetch).toHaveBeenCalledWith(
-      `${MOCK_URL}/chat`,
-      expect.objectContaining({ method: 'POST' }),
-    );
-  });
-
-  it('sends message in request body', async () => {
-    (global.fetch as jest.Mock).mockResolvedValueOnce({
-      ok: true,
-      json: async () => ({ text: 'ok' }),
-    });
-    await sendMessage('my question', { vehicleModel: 'Ka' });
-    const call = (global.fetch as jest.Mock).mock.calls[0];
-    const body = JSON.parse(call[1].body);
-    expect(body.message).toBe('my question');
-    expect(body.vehicleModel).toBe('Ka');
-  });
-
-  it('sends Content-Type: application/json header', async () => {
-    (global.fetch as jest.Mock).mockResolvedValueOnce({
-      ok: true,
-      json: async () => ({ text: 'ok' }),
-    });
-    await sendMessage('hi');
-    const headers = (global.fetch as jest.Mock).mock.calls[0][1].headers;
-    expect(headers['Content-Type']).toBe('application/json');
-  });
-
-  it('returns text from backend response', async () => {
-    (global.fetch as jest.Mock).mockResolvedValueOnce({
-      ok: true,
-      json: async () => ({ text: 'Backend says hello!' }),
-    });
-    const res = await sendMessage('hello');
-    expect(res.text).toBe('Backend says hello!');
-  });
-
-  it('throws on non-ok response', async () => {
-    (global.fetch as jest.Mock).mockResolvedValueOnce({ ok: false, status: 500 });
-    await expect(sendMessage('hello')).rejects.toThrow('Backend error: 500');
-  });
-
-  it('throws on network failure', async () => {
-    (global.fetch as jest.Mock).mockRejectedValueOnce(new Error('Network error'));
-    await expect(sendMessage('hello')).rejects.toThrow('Network error');
-  });
-});

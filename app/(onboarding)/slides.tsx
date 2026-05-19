@@ -5,6 +5,7 @@ import {
   Dimensions,
   NativeScrollEvent,
   NativeSyntheticEvent,
+  Pressable,
   ScrollView,
   StyleSheet,
   Text,
@@ -21,7 +22,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { MeshGradient } from '@/components/mesh-gradient';
 import { ScheduleIllustration, SupportIllustration, TrackIllustration } from '@/components/slide-illustrations';
-import { Colors, Spacing } from '@/constants/theme';
+import { Colors, Radius, Spacing } from '@/constants/theme';
 
 const { width, height } = Dimensions.get('window');
 
@@ -168,11 +169,27 @@ export default function SlidesScreen() {
         <ProgressBar total={SLIDES.length} active={activeIndex} />
       </SafeAreaView>
 
-      {/* Swipe hint on first slide */}
-      {activeIndex === 0 && (
+      {/* Swipe hint on non-last slides */}
+      {activeIndex < SLIDES.length - 1 && (
         <SafeAreaView style={styles.hintWrapper} pointerEvents="none">
           <Text style={styles.hint}>swipe up</Text>
           <Text style={styles.hintArrow}>↑</Text>
+        </SafeAreaView>
+      )}
+
+      {/* Get Started button on last slide */}
+      {activeIndex === SLIDES.length - 1 && (
+        <SafeAreaView style={styles.ctaWrapper} pointerEvents="box-none">
+          <Pressable
+            style={({ pressed }) => [styles.ctaBtn, pressed && { opacity: 0.85, transform: [{ scale: 0.97 }] }]}
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+              router.replace('/(onboarding)/vehicle-setup');
+            }}
+          >
+            <Text style={styles.ctaText}>Get Started</Text>
+            <Text style={styles.ctaArrow}>→</Text>
+          </Pressable>
         </SafeAreaView>
       )}
     </View>
@@ -243,4 +260,31 @@ const styles = StyleSheet.create({
   },
   hint: { color: Colors.muted, fontSize: 12, letterSpacing: 2 },
   hintArrow: { color: Colors.muted, fontSize: 18, marginTop: 4 },
+  ctaWrapper: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    alignItems: 'center',
+    paddingBottom: Spacing.xl,
+    paddingHorizontal: Spacing.xl,
+  },
+  ctaBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: Spacing.sm,
+    backgroundColor: Colors.blue,
+    borderRadius: Radius.pill,
+    paddingVertical: 16,
+    paddingHorizontal: Spacing.xxl,
+    width: '100%',
+    shadowColor: Colors.blue,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.5,
+    shadowRadius: 16,
+    elevation: 8,
+  },
+  ctaText: { color: Colors.white, fontSize: 17, fontWeight: '700', letterSpacing: 0.3 },
+  ctaArrow: { color: Colors.white, fontSize: 18, fontWeight: '700' },
 });

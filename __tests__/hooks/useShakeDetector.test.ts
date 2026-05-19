@@ -111,4 +111,14 @@ describe('useShakeDetector — shake detection', () => {
     listener({ x: 0, y: 0, z: 1.1 });
     expect(onShake).not.toHaveBeenCalled();
   });
+
+  it('ignores duplicate above-threshold readings (aboveThreshold already true)', () => {
+    const onShake = jest.fn();
+    renderHook(() => useShakeDetector(onShake, true));
+    const listener = getListener();
+    // Two consecutive high readings without returning below threshold
+    listener({ x: 3, y: 0, z: 0 }); // peak detected, aboveThreshold → true
+    listener({ x: 3, y: 0, z: 0 }); // still above + aboveThreshold===true → neither branch
+    expect(onShake).not.toHaveBeenCalled();
+  });
 });

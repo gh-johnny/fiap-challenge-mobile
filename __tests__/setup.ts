@@ -1,9 +1,41 @@
 // Global mock setup for all tests
 
 // ── Reanimated ───────────────────────────────────────────────────────────────
-jest.mock('react-native-reanimated', () =>
-  require('react-native-reanimated/mock')
-);
+jest.mock('react-native-reanimated', () => {
+  const sv = (v: unknown) => ({ value: v });
+  const pass = (v: unknown) => v;
+  return {
+    __esModule: true,
+    default: { Value: sv, event: jest.fn(), add: jest.fn() },
+    useSharedValue: sv,
+    useAnimatedStyle: (fn: () => unknown) => fn(),
+    useAnimatedProps: (fn: () => unknown) => fn(),
+    useAnimatedScrollHandler: jest.fn(() => jest.fn()),
+    useDerivedValue: (fn: () => unknown) => sv(fn()),
+    withTiming: pass,
+    withSpring: pass,
+    withRepeat: pass,
+    withSequence: (...args: unknown[]) => args[0],
+    withDelay: (_d: unknown, v: unknown) => v,
+    cancelAnimation: jest.fn(),
+    runOnJS: (fn: (...a: unknown[]) => unknown) => fn,
+    runOnUI: (fn: (...a: unknown[]) => unknown) => fn,
+    Easing: {
+      linear: jest.fn((t: number) => t),
+      inOut: jest.fn((f: unknown) => f),
+      out: jest.fn((f: unknown) => f),
+      in: jest.fn((f: unknown) => f),
+      sin: jest.fn(),
+      quad: jest.fn(),
+      ease: jest.fn(),
+    },
+    createAnimatedComponent: (c: unknown) => c,
+    Animated: { View: 'View', Text: 'Text', ScrollView: 'ScrollView', Image: 'Image' },
+    FadeIn: { duration: jest.fn() },
+    FadeOut: { duration: jest.fn() },
+    SlideInDown: { duration: jest.fn() },
+  };
+});
 
 // ── Expo modules ─────────────────────────────────────────────────────────────
 jest.mock('expo-haptics', () => ({
@@ -54,6 +86,20 @@ jest.mock('expo-sensors', () => ({
     setUpdateInterval: jest.fn(),
     addListener: jest.fn(() => ({ remove: jest.fn() })),
   },
+  Barometer: {
+    setUpdateInterval: jest.fn(),
+    addListener: jest.fn(() => ({ remove: jest.fn() })),
+  },
+}));
+
+jest.mock('expo-calendar', () => ({
+  requestCalendarPermissionsAsync: jest.fn().mockResolvedValue({ status: 'granted' }),
+  getCalendarsAsync: jest.fn().mockResolvedValue([
+    { id: 'cal-1', allowsModifications: true, isPrimary: true, type: 'local' },
+  ]),
+  createEventAsync: jest.fn().mockResolvedValue('event-id-123'),
+  EntityTypes: { EVENT: 'event' },
+  CalendarType: { LOCAL: 'local' },
 }));
 
 jest.mock('expo-camera', () => ({
@@ -65,6 +111,33 @@ jest.mock('expo-linking', () => ({
   openURL: jest.fn().mockResolvedValue(undefined),
 }));
 
+// ── expo-av ───────────────────────────────────────────────────────────────────
+jest.mock('expo-av', () => ({
+  Audio: {
+    requestPermissionsAsync: jest.fn().mockResolvedValue({ granted: true }),
+    setAudioModeAsync: jest.fn().mockResolvedValue(undefined),
+    RecordingOptionsPresets: { HIGH_QUALITY: {} },
+    Recording: {
+      createAsync: jest.fn().mockResolvedValue({
+        recording: {
+          stopAndUnloadAsync: jest.fn().mockResolvedValue(undefined),
+          getURI: jest.fn().mockReturnValue('file://voice-note-test.m4a'),
+        },
+      }),
+    },
+    Sound: {
+      createAsync: jest.fn().mockResolvedValue({
+        sound: {
+          playAsync: jest.fn().mockResolvedValue(undefined),
+          stopAsync: jest.fn().mockResolvedValue(undefined),
+          unloadAsync: jest.fn().mockResolvedValue(undefined),
+          setOnPlaybackStatusUpdate: jest.fn(),
+        },
+      }),
+    },
+  },
+}));
+
 // ── React Navigation / Expo Router ───────────────────────────────────────────
 jest.mock('expo-router', () => ({
   useRouter: () => ({ replace: jest.fn(), push: jest.fn(), back: jest.fn() }),
@@ -73,8 +146,64 @@ jest.mock('expo-router', () => ({
   Stack: { Screen: 'Screen' },
 }));
 
+// ── Background fetch / task manager ──────────────────────────────────────────
+jest.mock('expo-background-fetch', () => ({
+  BackgroundFetchResult: { NewData: 'new-data', NoData: 'no-data', Failed: 'failed' },
+  BackgroundFetchStatus: { Available: 1, Denied: 2, Restricted: 3 },
+  getStatusAsync: jest.fn().mockResolvedValue(1), // Available
+  registerTaskAsync: jest.fn().mockResolvedValue(undefined),
+  unregisterTaskAsync: jest.fn().mockResolvedValue(undefined),
+}));
+
+jest.mock('expo-task-manager', () => ({
+  defineTask: jest.fn(),
+  isTaskRegisteredAsync: jest.fn().mockResolvedValue(false),
+  unregisterAllTasksAsync: jest.fn().mockResolvedValue(undefined),
+  getRegisteredTasksAsync: jest.fn().mockResolvedValue([]),
+}));
+
+// ── SecureStore ───────────────────────────────────────────────────────────────
+jest.mock('expo-secure-store', () => ({
+  getItemAsync: jest.fn().mockResolvedValue(null),
+  setItemAsync: jest.fn().mockResolvedValue(undefined),
+  deleteItemAsync: jest.fn().mockResolvedValue(undefined),
+}));
+
+// ── AsyncStorage ──────────────────────────────────────────────────────────────
+jest.mock('@react-native-async-storage/async-storage', () => ({
+  getItem: jest.fn().mockResolvedValue(null),
+  setItem: jest.fn().mockResolvedValue(undefined),
+  removeItem: jest.fn().mockResolvedValue(undefined),
+  clear: jest.fn().mockResolvedValue(undefined),
+  getAllKeys: jest.fn().mockResolvedValue([]),
+  multiGet: jest.fn().mockResolvedValue([]),
+  multiSet: jest.fn().mockResolvedValue(undefined),
+}));
+
 // ── React Native modules ─────────────────────────────────────────────────────
 jest.mock('react-native/Libraries/Utilities/Platform', () => ({
   OS: 'ios',
   select: (obj: Record<string, unknown>) => obj.ios,
 }));
+
+// ── Skia ──────────────────────────────────────────────────────────────────────
+jest.mock('@shopify/react-native-skia', () => {
+  const React = require('react');
+  const noop = () => null;
+  const passthrough = ({ children }: { children?: React.ReactNode }) => children ?? null;
+  return {
+    Canvas: passthrough,
+    Circle: noop,
+    Group: passthrough,
+    Line: noop,
+    LinearGradient: noop,
+    RadialGradient: noop,
+    RoundedRect: noop,
+    Fill: noop,
+    Path: noop,
+    Paint: passthrough,
+    BlurMask: noop,
+    Skia: { Path: { Make: () => ({}) } },
+    vec: (x: number, y: number) => ({ x, y }),
+  };
+});

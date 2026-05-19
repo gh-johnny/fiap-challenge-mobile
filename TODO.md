@@ -65,6 +65,22 @@
 - [ ] No persistence — state resets on app kill (by design, in-memory)
 - [ ] Could replace slide-animation.tsx with real Lottie JSON from lottiefiles.com
 
+## Design System Fixes (2026-05-19)
+
+- [x] #1 MeshGradient blur fix — SVG RadialGradient substitui filter inválido
+- [x] #2 AnimatedButton cores — hardcoded #0057FF → Colors.blue + Colors.blueLight
+- [x] #3 AnimatedButton radius — Radius.md → Radius.lg
+- [x] #4 Tab bar ícones — emojis → Ionicons
+- [x] #5 Spring presets — adicionar Springs ao theme + atualizar componentes
+- [x] #6 MeshGradient background — #020812 → Colors.surface (feito junto com #1)
+- [x] #7 VehicleCard3D gloss opacity — 0.07 → 0.14
+- [x] #8 VehicleCard3D emoji → CarSvgStatic (SVG inline estático)
+- [x] #9 Typography letterSpacing e lineHeight + micro style
+- [x] #10 QuickAction cards glass — BlurView medium + Ionicons
+- [x] #11 SosModal ícones — emojis → Ionicons
+- [x] #12 BlurIntensity scale no theme (feito junto com #5)
+- [-] #13 VehicleCard3D emoji fontSize — coberto pela #8
+
 ## Session notes
 - Started: 2026-05-06
 - Auth guard: unauthenticated → (auth), authenticated + not onboarded → (onboarding), done → (tabs)

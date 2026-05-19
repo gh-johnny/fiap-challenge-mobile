@@ -9,6 +9,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import 'react-native-reanimated';
 
 import { Colors, Radius, Spacing } from '@/constants/theme';
+import { registerBackgroundReminder } from '@/services/backgroundReminder';
 import { useAuthStore } from '@/store/auth';
 
 Notifications.setNotificationHandler({
@@ -34,7 +35,9 @@ export default function RootLayout() {
   const appState = useRef(AppState.currentState);
 
   useEffect(() => {
-    Notifications.requestPermissionsAsync();
+    Notifications.requestPermissionsAsync().then(() => {
+      registerBackgroundReminder();
+    });
   }, []);
 
   // Re-lock when app comes back from background (only if user is logged in)

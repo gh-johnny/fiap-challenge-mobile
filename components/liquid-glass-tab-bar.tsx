@@ -1,15 +1,18 @@
 import { BlurView } from 'expo-blur';
+import { Ionicons } from '@expo/vector-icons';
 import { Pressable, StyleSheet, Text, View, Platform } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 
 import { Colors, Radius } from '@/constants/theme';
 
-const TAB_ICONS: Record<string, string> = {
-  index: '⊞',
-  'my-car': '🚗',
-  schedule: '🗓️',
-  'ai-assistant': '✦',
+type IoniconsName = React.ComponentProps<typeof Ionicons>['name'];
+
+const TAB_ICONS: Record<string, { active: IoniconsName; inactive: IoniconsName }> = {
+  index:          { active: 'home',           inactive: 'home-outline' },
+  'my-car':       { active: 'car-sport',      inactive: 'car-sport-outline' },
+  schedule:       { active: 'calendar',       inactive: 'calendar-outline' },
+  'ai-assistant': { active: 'sparkles',       inactive: 'sparkles-outline' },
 };
 
 const TAB_LABELS: Record<string, string> = {
@@ -32,7 +35,8 @@ export function LiquidGlassTabBar({ state, descriptors, navigation }: BottomTabB
         <View style={styles.inner}>
           {state.routes.map((route, index) => {
             const isFocused = state.index === index;
-            const icon = TAB_ICONS[route.name] ?? '●';
+            const icons = TAB_ICONS[route.name];
+            const iconName = icons ? (isFocused ? icons.active : icons.inactive) : 'ellipse';
             const label = TAB_LABELS[route.name] ?? route.name;
 
             function onPress() {
@@ -52,7 +56,11 @@ export function LiquidGlassTabBar({ state, descriptors, navigation }: BottomTabB
                 accessibilityLabel={descriptors[route.key].options.tabBarAccessibilityLabel}
               >
                 {isFocused && <View style={styles.activeBlob} />}
-                <Text style={[styles.icon, isFocused && styles.iconActive]}>{icon}</Text>
+                <Ionicons
+                  name={iconName}
+                  size={22}
+                  color={isFocused ? Colors.white : Colors.muted}
+                />
                 <Text style={[styles.label, isFocused && styles.labelActive]}>{label}</Text>
               </Pressable>
             );
@@ -100,8 +108,6 @@ const styles = StyleSheet.create({
     borderRadius: Radius.lg,
     opacity: 0.2,
   },
-  icon: { fontSize: 20, color: Colors.muted },
-  iconActive: { color: Colors.white },
   label: { fontSize: 10, color: Colors.muted, fontWeight: '500' },
   labelActive: { color: Colors.white, fontWeight: '700' },
 });

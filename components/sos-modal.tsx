@@ -2,6 +2,7 @@ import { BlurView } from 'expo-blur';
 import * as Haptics from 'expo-haptics';
 import * as Linking from 'expo-linking';
 import * as Location from 'expo-location';
+import { Ionicons } from '@expo/vector-icons';
 import { useCallback, useState } from 'react';
 import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 import Animated, { FadeIn, FadeOut, SlideInDown, SlideOutDown } from 'react-native-reanimated';
@@ -12,7 +13,7 @@ import { useSosStore } from '@/store/sos';
 const FORD_ASSIST_NUMBER = 'tel:08007033673';
 
 interface ActionButtonProps {
-  icon: string;
+  icon: React.ComponentProps<typeof Ionicons>['name'];
   label: string;
   sublabel: string;
   accent?: boolean;
@@ -26,7 +27,7 @@ function ActionButton({ icon, label, sublabel, accent, onPress }: ActionButtonPr
       onPress={onPress}
     >
       <View style={[styles.actionIcon, accent && styles.actionIconAccent]}>
-        <Text style={styles.actionEmoji}>{icon}</Text>
+        <Ionicons name={icon} size={20} color={accent ? Colors.white : Colors.mutedLight} />
       </View>
       <View style={styles.actionText}>
         <Text style={styles.actionLabel}>{label}</Text>
@@ -102,7 +103,7 @@ export function SosModal({ visible, onClose }: SosModalProps) {
           {/* Actions */}
           <View style={styles.actions}>
             <ActionButton
-              icon="📞"
+              icon="call"
               label="Ligar Ford Assist"
               sublabel="Central 24h — 0800 703 3673"
               accent
@@ -110,21 +111,21 @@ export function SosModal({ visible, onClose }: SosModalProps) {
             />
             <View style={styles.separator} />
             <ActionButton
-              icon="📍"
+              icon="location"
               label="Compartilhar Localização"
               sublabel="Abre Google Maps com sua posição"
               onPress={handleLocation}
             />
             <View style={styles.separator} />
             <ActionButton
-              icon={towRequested ? '✅' : '🚛'}
+              icon={towRequested ? 'checkmark-circle' : 'construct'}
               label={towRequested ? 'Reboque Solicitado!' : 'Solicitar Reboque'}
               sublabel={towRequested ? 'Aguarde — serviço em caminho' : 'Assistência mecânica na estrada'}
               onPress={handleTow}
             />
             <View style={styles.separator} />
             <ActionButton
-              icon="👤"
+              icon="person"
               label="Contato de Emergência"
               sublabel={emergencyContact ?? 'Nenhum contato cadastrado'}
               onPress={handleEmergencyContact}
@@ -229,7 +230,6 @@ const styles = StyleSheet.create({
   actionIconAccent: {
     backgroundColor: 'rgba(229,57,53,0.15)',
   },
-  actionEmoji: { fontSize: 20 },
   actionText: { flex: 1 },
   actionLabel: {
     color: Colors.white,

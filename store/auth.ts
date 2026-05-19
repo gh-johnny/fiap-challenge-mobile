@@ -1,4 +1,7 @@
 import { create } from 'zustand';
+import { createJSONStorage, persist } from 'zustand/middleware';
+
+import { secureStorage } from '@/storage/secureStorage';
 
 export interface User {
   name: string;
@@ -24,15 +27,29 @@ interface AuthState {
   completeOnboarding: () => void;
 }
 
-export const useAuthStore = create<AuthState>((set) => ({
-  user: null,
-  vehicle: null,
-  isAuthenticated: false,
-  hasOnboarded: false,
+export const useAuthStore = create<AuthState>()(
+  persist(
+    (set) => ({
+      user: null,
+      vehicle: null,
+      isAuthenticated: false,
+      hasOnboarded: false,
 
-  login: (user) => set({ user, isAuthenticated: true }),
-  signup: (user) => set({ user, isAuthenticated: true }),
-  logout: () => set({ user: null, vehicle: null, isAuthenticated: false, hasOnboarded: false }),
-  setVehicle: (vehicle) => set({ vehicle }),
-  completeOnboarding: () => set({ hasOnboarded: true }),
-}));
+      login: (user) => set({ user, isAuthenticated: true }),
+      signup: (user) => set({ user, isAuthenticated: true }),
+      logout: () => set({ user: null, vehicle: null, isAuthenticated: false, hasOnboarded: false }),
+      setVehicle: (vehicle) => set({ vehicle }),
+      completeOnboarding: () => set({ hasOnboarded: true }),
+    }),
+    {
+      name: 'ford-auth',
+      storage: createJSONStorage(() => secureStorage),
+      partialize: (s) => ({
+        user: s.user,
+        vehicle: s.vehicle,
+        isAuthenticated: s.isAuthenticated,
+        hasOnboarded: s.hasOnboarded,
+      }),
+    },
+  ),
+);

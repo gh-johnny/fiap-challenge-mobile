@@ -1,17 +1,8 @@
-// Backend abstraction — swap EXPO_PUBLIC_API_URL to point at your real server.
-// When the env var is set, calls POST /chat and expects { text: string }.
-// When unset, falls back to local canned responses (demo mode).
-
-const BASE_URL = process.env.EXPO_PUBLIC_API_URL ?? null;
-
 export interface ChatResponse {
   text: string;
-  // Future HeyGen fields (populated by backend when ready):
-  // heygenSessionToken?: string;
-  // liveKitRoomName?: string;
 }
 
-// ─── Local mock (demo mode) ──────────────────────────────────────────────────
+// ─── Canned responses ────────────────────────────────────────────────────────
 
 const CANNED: { match: RegExp; reply: string }[] = [
   {
@@ -65,23 +56,10 @@ function mockReply(message: string): string {
   return FALLBACK;
 }
 
-// ─── Public API ──────────────────────────────────────────────────────────────
-
 export async function sendMessage(
   message: string,
-  context: { vehicleModel?: string; vehicleYear?: string } = {},
+  _context: { vehicleModel?: string; vehicleYear?: string } = {},
 ): Promise<ChatResponse> {
-  if (BASE_URL) {
-    const res = await fetch(`${BASE_URL}/chat`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ message, ...context }),
-    });
-    if (!res.ok) throw new Error(`Backend error: ${res.status}`);
-    return res.json() as Promise<ChatResponse>;
-  }
-
-  // Demo mode: simulate network latency
   await new Promise((r) => setTimeout(r, 900 + Math.random() * 500));
   return { text: mockReply(message) };
 }
