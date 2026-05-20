@@ -21,7 +21,6 @@ import Animated, {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { MeshGradient } from '@/components/mesh-gradient';
-import { ScheduleIllustration, SupportIllustration, TrackIllustration } from '@/components/slide-illustrations';
 import { Colors, Radius, Spacing } from '@/constants/theme';
 
 const { width, height } = Dimensions.get('window');
@@ -31,21 +30,21 @@ const SLIDES = [
     id: '1',
     title: 'Schedule Service',
     subtitle: 'Book maintenance, repairs, and inspections at any Ford dealer — in seconds.',
-    Illustration: ScheduleIllustration,
+    emoji: '🗓️',
     accent: '#0057FF',
   },
   {
     id: '2',
     title: 'Track Your Vehicle',
     subtitle: "Real-time status on your car's service progress. No more waiting on hold.",
-    Illustration: TrackIllustration,
+    emoji: '🚗',
     accent: '#1A6BFF',
   },
   {
     id: '3',
     title: 'Get Support',
     subtitle: 'AI-powered assistance and live chat with Ford specialists, 24/7.',
-    Illustration: SupportIllustration,
+    emoji: '💬',
     accent: '#3385FF',
   },
 ];
@@ -96,19 +95,16 @@ function ProgressBar({ total, active }: { total: number; active: number }) {
 }
 
 function Slide({ slide, isActive }: { slide: typeof SLIDES[0]; isActive: boolean }) {
-  const { Illustration } = slide;
-
   return (
     <View style={styles.slide}>
-      {/* Illustration — top 60% */}
+      {/* Emoji — top half */}
       <View style={styles.illustrationArea}>
-        {isActive && <Illustration />}
+        <Text style={styles.slideEmoji}>{slide.emoji}</Text>
       </View>
 
       {/* Text — bottom 40% */}
       <View style={styles.textArea}>
-        {isActive && (
-          <>
+        <>
             <View style={styles.titleRow}>
               <AnimatedWords text={slide.title} baseDelay={200} />
             </View>
@@ -116,7 +112,6 @@ function Slide({ slide, isActive }: { slide: typeof SLIDES[0]; isActive: boolean
               <AnimatedWords text={slide.subtitle} baseDelay={500} small />
             </View>
           </>
-        )}
       </View>
     </View>
   );
@@ -210,6 +205,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  slideEmoji: {
+    fontSize: 120,
+  },
   textArea: {
     height: height * 0.35,
     width,
@@ -221,7 +219,7 @@ const styles = StyleSheet.create({
   subtitleRow: { flexDirection: 'row', flexWrap: 'wrap' },
   wordsRow: { flexDirection: 'row', flexWrap: 'wrap' },
   wordChunk: {
-    color: Colors.white,
+    color: Colors.text,
     fontSize: 32,
     fontWeight: '800',
     lineHeight: 40,
@@ -244,7 +242,7 @@ const styles = StyleSheet.create({
     width: 3,
     height: 36,
     borderRadius: 2,
-    backgroundColor: 'rgba(255,255,255,0.2)',
+    backgroundColor: 'rgba(1,66,192,0.18)',
   },
   progressSegmentActive: {
     backgroundColor: Colors.blue,

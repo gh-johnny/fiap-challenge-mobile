@@ -1,4 +1,11 @@
-import { Audio } from 'expo-av';
+import {
+  createAudioPlayer,
+  RecordingPresets,
+  requestRecordingPermissionsAsync,
+  setAudioModeAsync,
+  useAudioRecorder,
+} from 'expo-audio';
+import type { AudioPlayer } from 'expo-audio';
 import * as Haptics from 'expo-haptics';
 import { useEffect, useRef, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
@@ -21,8 +28,8 @@ interface Props {
 
 export function VoiceNote({ uri, onSave, onDelete }: Props) {
   const [state, setState] = useState<RecordState>('idle');
-  const recordingRef = useRef<Audio.Recording | null>(null);
-  const soundRef = useRef<Audio.Sound | null>(null);
+  const recorder = useAudioRecorder(RecordingPresets.HIGH_QUALITY);
+  const playerRef = useRef<AudioPlayer | null>(null);
 
   const pulse = useSharedValue(1);
 
@@ -39,21 +46,17 @@ export function VoiceNote({ uri, onSave, onDelete }: Props) {
   }));
 
   async function startRecording() {
-    await Audio.requestPermissionsAsync();
-    await Audio.setAudioModeAsync({ allowsRecordingIOS: true, playsInSilentModeIOS: true });
-    const { recording } = await Audio.Recording.createAsync(
-      Audio.RecordingOptionsPresets.HIGH_QUALITY,
-    );
-    recordingRef.current = recording;
+    await requestRecordingPermissionsAsync();
+    await setAudioModeAsync({ allowsRecording: true, playsInSilentMode: true });
+    await recorder.prepareToRecordAsync();
+    recorder.record();
     setState('recording');
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
   }
 
   async function stopRecording() {
-    if (!recordingRef.current) return;
-    await recordingRef.current.stopAndUnloadAsync();
-    const savedUri = recordingRef.current.getURI();
-    recordingRef.current = null;
+    await recorder.stop();
+    const savedUri = recorder.uri;
     setState('idle');
     if (savedUri) {
       onSave(savedUri);
@@ -65,23 +68,24 @@ export function VoiceNote({ uri, onSave, onDelete }: Props) {
     if (!uri) return;
     setState('playing');
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    await Audio.setAudioModeAsync({ allowsRecordingIOS: false, playsInSilentModeIOS: true });
-    const { sound } = await Audio.Sound.createAsync({ uri });
-    soundRef.current = sound;
-    await sound.playAsync();
-    sound.setOnPlaybackStatusUpdate((status) => {
-      if ('didJustFinish' in status && status.didJustFinish) {
+    await setAudioModeAsync({ allowsRecording: false, playsInSilentMode: true });
+    const player = createAudioPlayer({ uri });
+    playerRef.current = player;
+    player.play();
+    player.addListener('playbackStatusUpdate', (status) => {
+      if (status.didJustFinish) {
         setState('idle');
-        sound.unloadAsync();
+        player.remove();
+        playerRef.current = null;
       }
     });
   }
 
   async function stopPlayback() {
-    if (soundRef.current) {
-      await soundRef.current.stopAsync();
-      await soundRef.current.unloadAsync();
-      soundRef.current = null;
+    if (playerRef.current) {
+      playerRef.current.pause();
+      playerRef.current.remove();
+      playerRef.current = null;
     }
     setState('idle');
   }
@@ -127,7 +131,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row', alignItems: 'center', gap: Spacing.sm,
     paddingHorizontal: Spacing.md, paddingVertical: 8,
     borderRadius: Radius.pill, borderWidth: 1,
-    borderColor: Colors.border, backgroundColor: 'rgba(255,255,255,0.04)',
+    borderColor: Colors.border, backgroundColor: 'rgba(1,66,192,0.05)',
   },
   recBtnActive: { borderColor: Colors.danger, backgroundColor: 'rgba(229,57,53,0.1)' },
   recDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: Colors.muted },
@@ -140,7 +144,7 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(1,66,192,0.4)', backgroundColor: 'rgba(1,66,192,0.1)',
   },
   playBtnActive: { borderColor: Colors.danger, backgroundColor: 'rgba(229,57,53,0.1)' },
-  playIcon: { fontSize: 12, color: Colors.white },
+  playIcon: { fontSize: 12, color: Colors.text },
   playLabel: { color: Colors.mutedLight, fontSize: 12, fontWeight: '600' },
   delBtn: { padding: 6 },
   delIcon: { fontSize: 16 },

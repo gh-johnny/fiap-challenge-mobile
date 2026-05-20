@@ -27,7 +27,6 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { AnimatedButton } from '@/components/animated-button';
 import { MeshGradient } from '@/components/mesh-gradient';
-import { CarSilhouette } from '@/components/slide-illustrations';
 import { Colors, Radius, Spacing, Typography } from '@/constants/theme';
 import { useAuthStore } from '@/store/auth';
 
@@ -246,7 +245,7 @@ function PickerModal({ visible, items, onSelect, onClose, title }: {
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
       <Pressable style={picker.backdrop} onPress={onClose} />
-      <BlurView intensity={Platform.OS === 'android' ? 20 : 50} tint="dark" style={picker.sheet}>
+      <BlurView intensity={Platform.OS === 'android' ? 20 : 50} tint="light" style={picker.sheet}>
         <View style={picker.handle} />
         <Text style={picker.title}>{title}</Text>
         <ScrollView showsVerticalScrollIndicator={false}>
@@ -328,7 +327,7 @@ export default function VehicleSetupScreen() {
       <SafeAreaView style={styles.safe}>
         {/* Car SVG top half */}
         <Animated.View style={[styles.carArea, carStyle]}>
-          <CarSilhouette />
+          <Text style={styles.carEmoji}>🚗</Text>
           <Text style={styles.carLabel}>YOUR FORD</Text>
         </Animated.View>
 
@@ -336,7 +335,7 @@ export default function VehicleSetupScreen() {
         <Animated.View style={[styles.formWrap, formStyle]}>
           <BlurView
             intensity={Platform.OS === 'android' ? 30 : 60}
-            tint="dark"
+            tint="light"
             style={styles.card}
           >
             <View style={styles.cardInner}>
@@ -436,6 +435,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: Spacing.md,
   },
+  carEmoji: { fontSize: 100 },
   carLabel: {
     color: Colors.muted,
     fontSize: 11,
@@ -447,8 +447,8 @@ const styles = StyleSheet.create({
     borderRadius: Radius.xl,
     overflow: 'hidden',
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.13)',
-    backgroundColor: Platform.OS === 'android' ? 'rgba(8,12,28,0.9)' : 'transparent',
+    borderColor: 'rgba(1,66,192,0.20)',
+    backgroundColor: Platform.OS === 'android' ? 'rgba(238,242,255,0.95)' : 'transparent',
   },
   cardInner: { padding: Spacing.lg, gap: Spacing.sm },
   title: { ...Typography.heading, fontSize: 22, marginBottom: 2 },
@@ -456,9 +456,9 @@ const styles = StyleSheet.create({
   field: { gap: 6 },
   label: { color: Colors.muted, fontSize: 10, fontWeight: '700', letterSpacing: 2 },
   select: {
-    backgroundColor: 'rgba(255,255,255,0.06)',
+    backgroundColor: 'rgba(1,66,192,0.07)',
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.1)',
+    borderColor: 'rgba(1,66,192,0.18)',
     borderRadius: Radius.md,
     paddingHorizontal: Spacing.md,
     paddingVertical: 12,
@@ -466,17 +466,17 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
   },
-  selectText: { color: Colors.white, fontSize: 15 },
+  selectText: { color: Colors.text, fontSize: 15 },
   placeholder: { color: Colors.muted },
   chevron: { color: Colors.muted, fontSize: 20 },
   input: {
-    backgroundColor: 'rgba(255,255,255,0.06)',
+    backgroundColor: 'rgba(1,66,192,0.07)',
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.1)',
+    borderColor: 'rgba(1,66,192,0.18)',
     borderRadius: Radius.md,
     paddingHorizontal: Spacing.md,
     paddingVertical: 12,
-    color: Colors.white,
+    color: Colors.text,
     fontSize: 15,
   },
   error: { color: Colors.danger, fontSize: 13 },
@@ -513,13 +513,13 @@ const picker = StyleSheet.create({
     borderTopRightRadius: Radius.xl,
     overflow: 'hidden',
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.1)',
-    backgroundColor: Platform.OS === 'android' ? 'rgba(8,12,28,0.95)' : 'transparent',
+    borderColor: 'rgba(1,66,192,0.18)',
+    backgroundColor: Platform.OS === 'android' ? 'rgba(238,242,255,0.97)' : 'transparent',
     paddingBottom: Spacing.xl,
     maxHeight: height * 0.5,
   },
   handle: { width: 40, height: 4, backgroundColor: Colors.border, borderRadius: 2, alignSelf: 'center', marginVertical: Spacing.md },
   title: { ...Typography.subheading, paddingHorizontal: Spacing.lg, marginBottom: Spacing.md },
   item: { paddingVertical: Spacing.md, paddingHorizontal: Spacing.lg, borderBottomWidth: 1, borderBottomColor: Colors.border },
-  itemText: { color: Colors.white, fontSize: 16 },
+  itemText: { color: Colors.text, fontSize: 16 },
 });

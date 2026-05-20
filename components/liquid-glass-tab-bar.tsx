@@ -29,7 +29,7 @@ export function LiquidGlassTabBar({ state, descriptors, navigation }: BottomTabB
     <View style={[styles.wrapper, { paddingBottom: insets.bottom + 8 }]}>
       <BlurView
         intensity={Platform.OS === 'android' ? 40 : 60}
-        tint="dark"
+        tint="light"
         style={styles.blur}
       >
         <View style={styles.inner}>
@@ -59,7 +59,7 @@ export function LiquidGlassTabBar({ state, descriptors, navigation }: BottomTabB
                 <Ionicons
                   name={iconName}
                   size={22}
-                  color={isFocused ? Colors.white : Colors.muted}
+                  color={isFocused ? Colors.blue : Colors.muted}
                 />
                 <Text style={[styles.label, isFocused && styles.labelActive]}>{label}</Text>
               </Pressable>
@@ -82,8 +82,8 @@ const styles = StyleSheet.create({
     borderRadius: Radius.xl,
     overflow: 'hidden',
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.12)',
-    backgroundColor: Platform.OS === 'android' ? 'rgba(10,15,30,0.85)' : 'transparent',
+    borderColor: 'rgba(1,66,192,0.20)',
+    backgroundColor: Platform.OS === 'android' ? 'rgba(238,242,255,0.92)' : 'transparent',
   },
   inner: {
     flexDirection: 'row',
@@ -109,5 +109,5 @@ const styles = StyleSheet.create({
     opacity: 0.2,
   },
   label: { fontSize: 10, color: Colors.muted, fontWeight: '500' },
-  labelActive: { color: Colors.white, fontWeight: '700' },
+  labelActive: { color: Colors.blue, fontWeight: '700' },
 });

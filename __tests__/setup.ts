@@ -111,31 +111,24 @@ jest.mock('expo-linking', () => ({
   openURL: jest.fn().mockResolvedValue(undefined),
 }));
 
-// ── expo-av ───────────────────────────────────────────────────────────────────
-jest.mock('expo-av', () => ({
-  Audio: {
-    requestPermissionsAsync: jest.fn().mockResolvedValue({ granted: true }),
-    setAudioModeAsync: jest.fn().mockResolvedValue(undefined),
-    RecordingOptionsPresets: { HIGH_QUALITY: {} },
-    Recording: {
-      createAsync: jest.fn().mockResolvedValue({
-        recording: {
-          stopAndUnloadAsync: jest.fn().mockResolvedValue(undefined),
-          getURI: jest.fn().mockReturnValue('file://voice-note-test.m4a'),
-        },
-      }),
-    },
-    Sound: {
-      createAsync: jest.fn().mockResolvedValue({
-        sound: {
-          playAsync: jest.fn().mockResolvedValue(undefined),
-          stopAsync: jest.fn().mockResolvedValue(undefined),
-          unloadAsync: jest.fn().mockResolvedValue(undefined),
-          setOnPlaybackStatusUpdate: jest.fn(),
-        },
-      }),
-    },
-  },
+// ── expo-audio ────────────────────────────────────────────────────────────────
+jest.mock('expo-audio', () => ({
+  requestRecordingPermissionsAsync: jest.fn().mockResolvedValue({ granted: true }),
+  setAudioModeAsync: jest.fn().mockResolvedValue(undefined),
+  RecordingPresets: { HIGH_QUALITY: {}, LOW_QUALITY: {} },
+  useAudioRecorder: jest.fn(() => ({
+    prepareToRecordAsync: jest.fn().mockResolvedValue(undefined),
+    record: jest.fn(),
+    stop: jest.fn().mockResolvedValue(undefined),
+    uri: 'file://voice-note-test.m4a',
+    isRecording: false,
+  })),
+  createAudioPlayer: jest.fn(() => ({
+    play: jest.fn(),
+    pause: jest.fn(),
+    remove: jest.fn(),
+    addListener: jest.fn(),
+  })),
 }));
 
 // ── React Navigation / Expo Router ───────────────────────────────────────────
@@ -146,11 +139,11 @@ jest.mock('expo-router', () => ({
   Stack: { Screen: 'Screen' },
 }));
 
-// ── Background fetch / task manager ──────────────────────────────────────────
-jest.mock('expo-background-fetch', () => ({
-  BackgroundFetchResult: { NewData: 'new-data', NoData: 'no-data', Failed: 'failed' },
-  BackgroundFetchStatus: { Available: 1, Denied: 2, Restricted: 3 },
-  getStatusAsync: jest.fn().mockResolvedValue(1), // Available
+// ── Background task ──────────────────────────────────────────────────────────
+jest.mock('expo-background-task', () => ({
+  BackgroundTaskResult: { Success: 1, Failed: 2 },
+  BackgroundTaskStatus: { Restricted: 1, Available: 2 },
+  getStatusAsync: jest.fn().mockResolvedValue(2), // Available
   registerTaskAsync: jest.fn().mockResolvedValue(undefined),
   unregisterTaskAsync: jest.fn().mockResolvedValue(undefined),
 }));

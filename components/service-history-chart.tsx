@@ -7,7 +7,6 @@ import Animated, {
   withDelay,
   withTiming,
 } from 'react-native-reanimated';
-import Svg, { Line, Rect, Text as SvgText } from 'react-native-svg';
 
 import { Colors, Radius, Spacing, Typography } from '@/constants/theme';
 import { MonthBar, TypeCount } from '@/utils/serviceHistory';
@@ -58,24 +57,27 @@ export function MonthlyBarChart({ data }: { data: MonthBar[] }) {
     <View style={styles.chartWrap}>
       {/* Y-axis labels */}
       <View style={styles.yAxis}>
-        {[maxCount, Math.ceil(maxCount / 2), 0].map((v) => (
-          <Text key={v} style={styles.yLabel}>{v}</Text>
+        {[maxCount, Math.ceil(maxCount / 2), 0].map((v, i) => (
+          <Text key={i} style={styles.yLabel}>{v}</Text>
         ))}
       </View>
 
       {/* Bars + x labels */}
       <View style={{ flex: 1 }}>
-        {/* Grid lines via SVG */}
-        <Svg width="100%" height={CHART_H} style={{ position: 'absolute', top: 0 }}>
-          {[0, 0.5, 1].map((f) => (
-            <Line
-              key={f}
-              x1="0" y1={CHART_H * (1 - f)}
-              x2="100%" y2={CHART_H * (1 - f)}
-              stroke="rgba(255,255,255,0.05)" strokeWidth={1}
-            />
-          ))}
-        </Svg>
+        {/* Grid lines */}
+        {[0, 0.5, 1].map((f) => (
+          <View
+            key={f}
+            style={{
+              position: 'absolute',
+              top: CHART_H * (1 - f),
+              left: 0,
+              right: 0,
+              borderTopWidth: 1,
+              borderTopColor: 'rgba(1,66,192,0.08)',
+            }}
+          />
+        ))}
 
         <View style={[styles.barsRow, { height: CHART_H }]}>
           {data.map((bar, i) => (
@@ -165,7 +167,7 @@ const styles = StyleSheet.create({
   typeLabel: { color: Colors.mutedLight, fontSize: 11, width: 100 },
   typeTrack: {
     flex: 1, height: 8,
-    backgroundColor: 'rgba(255,255,255,0.06)',
+    backgroundColor: 'rgba(1,66,192,0.10)',
     borderRadius: 4, overflow: 'hidden',
   },
   typeCount: { color: Colors.muted, fontSize: 11, width: 18, textAlign: 'right' },

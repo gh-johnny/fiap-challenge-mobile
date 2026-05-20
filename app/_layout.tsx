@@ -14,7 +14,6 @@ import { useAuthStore } from '@/store/auth';
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
-    shouldShowAlert: true,
     shouldShowBanner: true,
     shouldShowList: true,
     shouldPlaySound: false,
@@ -75,7 +74,7 @@ export default function RootLayout() {
         <Stack.Screen name="(onboarding)" />
         <Stack.Screen name="(tabs)" />
       </Stack>
-      <StatusBar style="light" />
+      <StatusBar style="dark" />
 
       {locked && (
         <View style={lock.overlay}>
@@ -110,7 +109,7 @@ const lock = StyleSheet.create({
     paddingHorizontal: Spacing.xl,
   },
   icon: { fontSize: 64 },
-  title: { color: Colors.white, fontSize: 24, fontWeight: '800' },
+  title: { color: Colors.text, fontSize: 24, fontWeight: '800' },
   sub: { color: Colors.mutedLight, fontSize: 14, textAlign: 'center' },
   btn: {
     marginTop: Spacing.sm,

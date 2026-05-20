@@ -132,7 +132,7 @@ export default function LoginScreen() {
               {/* Glass card */}
               <BlurView
                 intensity={Platform.OS === 'android' ? 30 : 60}
-                tint="dark"
+                tint="light"
                 style={styles.card}
               >
                 <View style={styles.cardInner}>
@@ -210,8 +210,8 @@ const styles = StyleSheet.create({
     borderRadius: Radius.xl,
     overflow: 'hidden',
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.13)',
-    backgroundColor: Platform.OS === 'android' ? 'rgba(8,12,28,0.88)' : 'transparent',
+    borderColor: 'rgba(1,66,192,0.20)',
+    backgroundColor: Platform.OS === 'android' ? 'rgba(238,242,255,0.95)' : 'transparent',
   },
   cardInner: { padding: Spacing.lg, gap: 0 },
   title: { ...Typography.heading, fontSize: 26, marginBottom: 4 },
@@ -240,10 +240,10 @@ const styles = StyleSheet.create({
     borderRadius: Radius.lg,
     borderWidth: 1,
     borderColor: Colors.border,
-    backgroundColor: 'rgba(255,255,255,0.04)',
+    backgroundColor: 'rgba(1,66,192,0.05)',
   },
   biometricBtnPressed: {
-    backgroundColor: 'rgba(255,255,255,0.08)',
+    backgroundColor: 'rgba(1,66,192,0.10)',
     transform: [{ scale: 0.97 }],
   },
   biometricIcon: { fontSize: 20 },

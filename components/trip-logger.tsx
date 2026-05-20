@@ -18,7 +18,6 @@ import Animated, {
   withDelay,
   withTiming,
 } from 'react-native-reanimated';
-import Svg, { Line, Rect, Text as SvgText } from 'react-native-svg';
 
 import { VoiceNote } from '@/components/voice-note';
 import { Colors, Radius, Spacing, Typography } from '@/constants/theme';
@@ -61,12 +60,12 @@ function TripChart({ trips }: { trips: Trip[] }) {
 
   return (
     <View style={chart.wrap}>
-      <Svg width="100%" height={CHART_H} style={{ position: 'absolute' }}>
-        {[0, 0.5, 1].map((f) => (
-          <Line key={f} x1="0" y1={CHART_H * (1 - f)} x2="100%" y2={CHART_H * (1 - f)}
-            stroke="rgba(255,255,255,0.05)" strokeWidth={1} />
-        ))}
-      </Svg>
+      {[0, 0.5, 1].map((f) => (
+        <View key={f} style={{
+          position: 'absolute', top: CHART_H * (1 - f), left: 0, right: 0,
+          borderTopWidth: 1, borderTopColor: 'rgba(1,66,192,0.08)',
+        }} />
+      ))}
       <View style={chart.bars}>
         {visible.map((t, i) => <TripBar key={t.id} trip={t} maxKm={maxKm} index={i} />)}
       </View>
@@ -278,11 +277,11 @@ const styles = StyleSheet.create({
   addBtnText: { color: Colors.mutedLight, fontSize: 11, fontWeight: '700' },
 
   card: {
-    backgroundColor: 'rgba(13,21,38,0.8)', borderRadius: Radius.lg,
+    backgroundColor: 'rgba(255,255,255,0.85)', borderRadius: Radius.lg,
     padding: Spacing.lg, borderWidth: 1, borderColor: Colors.border, marginBottom: Spacing.md,
   },
   emptyCard: {
-    backgroundColor: 'rgba(13,21,38,0.6)', borderRadius: Radius.xl,
+    backgroundColor: 'rgba(255,255,255,0.75)', borderRadius: Radius.xl,
     padding: Spacing.xl, alignItems: 'center', gap: Spacing.sm,
     borderWidth: 1, borderColor: Colors.border, marginBottom: Spacing.md,
   },
@@ -292,7 +291,7 @@ const styles = StyleSheet.create({
 
   tripRowWrap: { paddingVertical: Spacing.sm },
   tripRow: { flexDirection: 'row', alignItems: 'center' },
-  tripDist: { color: Colors.white, fontSize: 15, fontWeight: '700' },
+  tripDist: { color: Colors.text, fontSize: 15, fontWeight: '700' },
   tripMeta: { color: Colors.muted, fontSize: 11, marginTop: 2 },
   tripDivider: { height: 1, backgroundColor: Colors.border },
   deleteBtn: { padding: 6 },
@@ -310,11 +309,11 @@ const styles = StyleSheet.create({
     width: 40, height: 4, borderRadius: 2, backgroundColor: Colors.border,
     alignSelf: 'center', marginBottom: Spacing.lg,
   },
-  modalTitle: { color: Colors.white, fontSize: 20, fontWeight: '700', marginBottom: Spacing.lg },
+  modalTitle: { color: Colors.text, fontSize: 20, fontWeight: '700', marginBottom: Spacing.lg },
   fieldLabel: { color: Colors.mutedLight, fontSize: 12, marginBottom: 6 },
   input: {
-    backgroundColor: 'rgba(255,255,255,0.06)', borderRadius: Radius.md,
-    borderWidth: 1, borderColor: Colors.border, color: Colors.white,
+    backgroundColor: 'rgba(1,66,192,0.07)', borderRadius: Radius.md,
+    borderWidth: 1, borderColor: Colors.border, color: Colors.text,
     fontSize: 15, paddingHorizontal: Spacing.md, paddingVertical: 12,
     marginBottom: Spacing.md,
   },
@@ -322,11 +321,11 @@ const styles = StyleSheet.create({
   fuelChip: {
     flex: 1, paddingVertical: 10, borderRadius: Radius.md,
     borderWidth: 1, borderColor: Colors.border,
-    backgroundColor: 'rgba(255,255,255,0.04)', alignItems: 'center',
+    backgroundColor: 'rgba(1,66,192,0.05)', alignItems: 'center',
   },
   fuelChipActive: { borderColor: Colors.blue, backgroundColor: 'rgba(1,66,192,0.2)' },
   fuelChipText: { color: Colors.mutedLight, fontWeight: '600', fontSize: 13 },
-  fuelChipTextActive: { color: Colors.white },
+  fuelChipTextActive: { color: Colors.text },
   consumptionHint: { color: Colors.muted, fontSize: 11, marginBottom: Spacing.md },
   errorText: { color: Colors.danger, fontSize: 12, marginBottom: Spacing.sm },
   confirmBtn: {

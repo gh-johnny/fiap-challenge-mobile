@@ -186,7 +186,7 @@ function BookingModal({ visible, onClose }: { visible: boolean; onClose: () => v
           <Animated.View style={[styles.sheet, sheetStyle]}>
             <BlurView
               intensity={Platform.OS === 'android' ? 40 : 80}
-              tint="dark"
+              tint="light"
               style={styles.sheetBlur}
             >
               {step === 'done' ? (
@@ -417,7 +417,7 @@ const styles = StyleSheet.create({
   },
   apptCard: {
     flexDirection: 'row',
-    backgroundColor: 'rgba(13,21,38,0.8)',
+    backgroundColor: 'rgba(255,255,255,0.85)',
     borderRadius: Radius.lg,
     borderWidth: 1,
     borderColor: Colors.border,
@@ -427,7 +427,7 @@ const styles = StyleSheet.create({
   apptAccent: { width: 4 },
   apptBody: { flex: 1, padding: Spacing.md },
   apptTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 },
-  apptType: { color: Colors.white, fontWeight: '700', fontSize: 15 },
+  apptType: { color: Colors.text, fontWeight: '700', fontSize: 15 },
   apptBadge: {
     borderRadius: Radius.pill,
     borderWidth: 1,
@@ -449,7 +449,7 @@ const styles = StyleSheet.create({
   },
   routeBtnText: { color: Colors.mutedLight, fontSize: 12, fontWeight: '600' },
   emptyCard: {
-    backgroundColor: 'rgba(13,21,38,0.6)',
+    backgroundColor: 'rgba(255,255,255,0.75)',
     borderRadius: Radius.xl,
     padding: Spacing.xl,
     alignItems: 'center',
@@ -475,7 +475,7 @@ const styles = StyleSheet.create({
   sheetBlur: {
     padding: Spacing.lg,
     paddingBottom: Spacing.xl + 16,
-    backgroundColor: Platform.OS === 'android' ? 'rgba(10,15,30,0.97)' : 'transparent',
+    backgroundColor: Platform.OS === 'android' ? 'rgba(238,242,255,0.97)' : 'transparent',
     borderTopWidth: 1,
     borderColor: Colors.border,
   },
@@ -487,7 +487,7 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
     marginBottom: Spacing.lg,
   },
-  sheetTitle: { color: Colors.white, fontSize: 20, fontWeight: '700', marginBottom: Spacing.lg },
+  sheetTitle: { color: Colors.text, fontSize: 20, fontWeight: '700', marginBottom: Spacing.lg },
   optionGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.sm, marginBottom: Spacing.lg },
   optionChip: {
     borderRadius: Radius.pill,
@@ -495,14 +495,14 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.sm,
     borderWidth: 1,
     borderColor: Colors.border,
-    backgroundColor: 'rgba(13,21,38,0.6)',
+    backgroundColor: 'rgba(1,66,192,0.07)',
   },
   optionChipSelected: {
     borderColor: Colors.blue,
     backgroundColor: 'rgba(1,66,192,0.2)',
   },
   optionText: { color: Colors.mutedLight, fontSize: 13, fontWeight: '600' },
-  optionTextSelected: { color: Colors.white },
+  optionTextSelected: { color: Colors.text },
   dateScroll: { maxHeight: 240, marginBottom: Spacing.lg },
   dateRow: {
     flexDirection: 'row',
@@ -514,7 +514,7 @@ const styles = StyleSheet.create({
   },
   dateRowSelected: { borderColor: Colors.blue },
   dateText: { color: Colors.mutedLight, fontSize: 14 },
-  dateTextSelected: { color: Colors.white, fontWeight: '700' },
+  dateTextSelected: { color: Colors.text, fontWeight: '700' },
   checkmark: { color: Colors.blue, fontWeight: '700', fontSize: 16 },
   sheetFooter: { flexDirection: 'row', gap: Spacing.sm, alignItems: 'center' },
   backBtn: {
@@ -528,7 +528,7 @@ const styles = StyleSheet.create({
   nextBtn: { flex: 1 },
   doneContainer: { alignItems: 'center', gap: Spacing.md, paddingVertical: Spacing.xl },
   doneEmoji: { fontSize: 56 },
-  doneTitle: { color: Colors.white, fontSize: 22, fontWeight: '800' },
+  doneTitle: { color: Colors.text, fontSize: 22, fontWeight: '800' },
   doneSub: { color: Colors.mutedLight, fontSize: 14, textAlign: 'center' },
   reminderBadge: {
     backgroundColor: 'rgba(1,66,192,0.15)',
@@ -549,7 +549,7 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.sm,
   },
   chartCard: {
-    backgroundColor: 'rgba(13,21,38,0.8)',
+    backgroundColor: 'rgba(255,255,255,0.85)',
     borderRadius: Radius.lg, padding: Spacing.lg,
     borderWidth: 1, borderColor: Colors.border, marginBottom: Spacing.md,
   },

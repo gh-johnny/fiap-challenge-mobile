@@ -4,15 +4,12 @@ import { useEffect, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import Animated, {
   Easing,
-  useAnimatedProps,
   useAnimatedStyle,
   useSharedValue,
   withDelay,
-  withSpring,
   withTiming,
 } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import Svg, { Circle, Path, Rect, Text as SvgText } from 'react-native-svg';
 
 import { MeshGradient } from '@/components/mesh-gradient';
 import { TripLoggerSection } from '@/components/trip-logger';
@@ -21,56 +18,27 @@ import { Colors, Radius, Spacing, Typography } from '@/constants/theme';
 import { useLiveTelemetry } from '@/hooks/useLiveTelemetry';
 import { useAuthStore } from '@/store/auth';
 
-// ─── Constants ────────────────────────────────────────────────────────────────
-
-const RPM_MAX = 6500;
-const RPM_RED = 5500;
-const GAUGE_R = 82;
-const GAUGE_CIRC = 2 * Math.PI * GAUGE_R;
-const GAUGE_ARC = (260 / 360) * GAUGE_CIRC; // 260° sweep
-
-const AnimatedCircle = Animated.createAnimatedComponent(Circle);
-
 // ─── CarTopView ───────────────────────────────────────────────────────────────
 
 function CarTopView() {
-  return (
-    <Svg width={220} height={110} viewBox="0 0 220 110">
-      <Rect x={30} y={38} width={160} height={50} rx={14} fill="#0142C0" opacity={0.9} />
-      <Path d="M70 38 Q80 10 140 10 Q160 10 170 38 Z" fill="#0057FF" />
-      <Path d="M72 38 Q82 16 138 16 Q155 16 168 38 Z" fill="rgba(160,200,255,0.18)" />
-      <Rect x={76} y={16} width={28} height={22} rx={4} fill="rgba(160,200,255,0.12)" />
-      <Rect x={110} y={16} width={28} height={22} rx={4} fill="rgba(160,200,255,0.12)" />
-      <Circle cx={65} cy={88} r={18} fill="#0A0F1E" stroke="#1A2A4A" strokeWidth={3} />
-      <Circle cx={65} cy={88} r={9} fill="#1A2A4A" />
-      <Circle cx={155} cy={88} r={18} fill="#0A0F1E" stroke="#1A2A4A" strokeWidth={3} />
-      <Circle cx={155} cy={88} r={9} fill="#1A2A4A" />
-      <Rect x={27} y={52} width={8} height={6} rx={2} fill="#A0D4FF" opacity={0.9} />
-      <Rect x={185} y={52} width={8} height={6} rx={2} fill="#FF4444" opacity={0.8} />
-      <Rect x={28} y={60} width={9} height={16} rx={3} fill="#003478" />
-    </Svg>
-  );
+  return <Text style={styles.carTopEmoji}>🚗</Text>;
 }
 
 // ─── HealthRing ───────────────────────────────────────────────────────────────
 
 function HealthRing({ value, color, label }: { value: number; color: string; label: string }) {
-  const circumference = 2 * Math.PI * 22;
-  const progress = circumference * (1 - value / 100);
+  const widthSv = useSharedValue(0);
+  useEffect(() => {
+    widthSv.value = withTiming(value, { duration: 700, easing: Easing.out(Easing.quad) });
+  }, [value]);
+  const barStyle = useAnimatedStyle(() => ({ width: `${widthSv.value}%` as any }));
+
   return (
     <View style={styles.ringContainer}>
-      <Svg width={60} height={60} viewBox="0 0 60 60">
-        <Circle cx={30} cy={30} r={22} fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth={5} />
-        <Circle
-          cx={30} cy={30} r={22}
-          fill="none" stroke={color} strokeWidth={5}
-          strokeDasharray={`${circumference}`}
-          strokeDashoffset={progress}
-          strokeLinecap="round"
-          transform="rotate(-90 30 30)"
-        />
-      </Svg>
       <Text style={[styles.ringValue, { color }]}>{value}%</Text>
+      <View style={styles.ringTrack}>
+        <Animated.View style={[styles.ringFill, { backgroundColor: color }, barStyle]} />
+      </View>
       <Text style={styles.ringLabel}>{label}</Text>
     </View>
   );
@@ -79,65 +47,14 @@ function HealthRing({ value, color, label }: { value: number; color: string; lab
 // ─── RpmGauge ─────────────────────────────────────────────────────────────────
 
 function RpmGauge({ rpm }: { rpm: number }) {
-  const rpmSv = useSharedValue(rpm);
-
-  useEffect(() => {
-    rpmSv.value = withSpring(rpm, { damping: 22, stiffness: 90, mass: 0.7 });
-  }, [rpm]);
-
-  const isRed = rpm >= RPM_RED;
-  const arcColor = isRed ? Colors.danger : Colors.blue;
-
-  const arcProps = useAnimatedProps(() => {
-    'worklet';
-    const len = Math.max(0, (rpmSv.value / RPM_MAX) * GAUGE_ARC);
-    return { strokeDashoffset: GAUGE_ARC - len };
-  });
-
-  const rpmText = Math.round(rpm / 100) * 100;
+  const isRed = rpm >= 5500;
+  const color = isRed ? Colors.danger : Colors.blue;
+  const rpmDisplay = (Math.round(rpm / 100) * 100 / 1000).toFixed(1);
 
   return (
     <View style={styles.gaugeWrapper}>
-      <Svg width={200} height={200} viewBox="0 0 200 200">
-        {/* Background arc */}
-        <Circle
-          cx={100} cy={100} r={GAUGE_R}
-          fill="none"
-          stroke="rgba(255,255,255,0.07)"
-          strokeWidth={12}
-          strokeDasharray={`${GAUGE_ARC} ${GAUGE_CIRC - GAUGE_ARC}`}
-          strokeLinecap="round"
-          transform="rotate(-230 100 100)"
-        />
-        {/* Red zone overlay */}
-        <Circle
-          cx={100} cy={100} r={GAUGE_R}
-          fill="none"
-          stroke="rgba(229,57,53,0.18)"
-          strokeWidth={12}
-          strokeDasharray={`${(RPM_RED / RPM_MAX) * GAUGE_ARC * 0.18} ${GAUGE_CIRC}`}
-          strokeLinecap="round"
-          transform="rotate(-230 100 100)"
-        />
-        {/* Animated value arc */}
-        <AnimatedCircle
-          cx={100} cy={100} r={GAUGE_R}
-          fill="none"
-          stroke={arcColor}
-          strokeWidth={12}
-          strokeDasharray={`${GAUGE_ARC} ${GAUGE_CIRC - GAUGE_ARC}`}
-          strokeLinecap="round"
-          transform="rotate(-230 100 100)"
-          animatedProps={arcProps}
-        />
-        {/* RPM label */}
-        <SvgText x={100} y={110} textAnchor="middle" fill={Colors.white} fontSize={28} fontWeight="700">
-          {(rpmText / 1000).toFixed(1)}
-        </SvgText>
-        <SvgText x={100} y={130} textAnchor="middle" fill={Colors.muted} fontSize={11}>
-          ×1000 RPM
-        </SvgText>
-      </Svg>
+      <Text style={[styles.gaugeValue, { color }]}>{rpmDisplay}</Text>
+      <Text style={styles.gaugeUnit}>×1000 RPM</Text>
     </View>
   );
 }
@@ -428,7 +345,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   heroTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: Spacing.md },
-  vehicleName: { color: Colors.white, fontSize: 22, fontWeight: '800' },
+  vehicleName: { color: Colors.text, fontSize: 22, fontWeight: '800' },
   vehicleYear: { color: Colors.mutedLight, fontSize: 13, marginTop: 2 },
   statusBadge: {
     flexDirection: 'row', alignItems: 'center', gap: 5,
@@ -443,7 +360,7 @@ const styles = StyleSheet.create({
   sectionTitle: { ...Typography.label, fontSize: 11, letterSpacing: 2, marginBottom: Spacing.sm, marginTop: Spacing.xs },
 
   card: {
-    backgroundColor: 'rgba(13,21,38,0.8)',
+    backgroundColor: 'rgba(255,255,255,0.85)',
     borderRadius: Radius.lg, padding: Spacing.lg,
     borderWidth: 1, borderColor: Colors.border, marginBottom: Spacing.md,
   },
@@ -455,7 +372,10 @@ const styles = StyleSheet.create({
   liveText: { color: Colors.danger, fontSize: 10, fontWeight: '800', letterSpacing: 1.5 },
 
   // RPM gauge
-  gaugeWrapper: { alignItems: 'center', justifyContent: 'center' },
+  gaugeWrapper: { alignItems: 'center', justifyContent: 'center', paddingVertical: Spacing.md },
+  gaugeValue: { fontSize: 48, fontWeight: '800', letterSpacing: -1 },
+  gaugeUnit: { color: Colors.muted, fontSize: 11, fontWeight: '600', letterSpacing: 0.5, marginTop: 2 },
+  carTopEmoji: { fontSize: 48, textAlign: 'center' },
 
   // Metric bar
   metricRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.sm, width: '100%', marginVertical: 4 },
@@ -463,7 +383,7 @@ const styles = StyleSheet.create({
   metricHeader: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 4 },
   metricLabel: { color: Colors.mutedLight, fontSize: 12 },
   metricValue: { fontSize: 12, fontWeight: '700' },
-  metricTrack: { height: 5, backgroundColor: 'rgba(255,255,255,0.08)', borderRadius: 3, overflow: 'hidden' },
+  metricTrack: { height: 5, backgroundColor: 'rgba(1,66,192,0.10)', borderRadius: 3, overflow: 'hidden' },
   metricFill: { height: 5, borderRadius: 3 },
 
   // Tire grid
@@ -473,7 +393,7 @@ const styles = StyleSheet.create({
   tireCar: { flex: 1, alignItems: 'center', transform: [{ scale: 0.55 }], height: 60 },
   tireCell: {
     width: 60, alignItems: 'center', justifyContent: 'center',
-    backgroundColor: 'rgba(255,255,255,0.04)',
+    backgroundColor: 'rgba(1,66,192,0.05)',
     borderRadius: Radius.md, borderWidth: 1, paddingVertical: 6,
   },
   tirePsi: { fontSize: 18, fontWeight: '800' },
@@ -482,8 +402,10 @@ const styles = StyleSheet.create({
 
   // Health rings
   ringsRow: { flexDirection: 'row', justifyContent: 'space-around' },
-  ringContainer: { alignItems: 'center', gap: 4 },
-  ringValue: { fontSize: 13, fontWeight: '700', marginTop: -4 },
+  ringContainer: { alignItems: 'center', gap: 4, flex: 1 },
+  ringValue: { fontSize: 13, fontWeight: '700' },
+  ringTrack: { width: '100%', height: 4, backgroundColor: 'rgba(1,66,192,0.10)', borderRadius: 2, overflow: 'hidden' },
+  ringFill: { height: 4, borderRadius: 2 },
   ringLabel: { color: Colors.muted, fontSize: 10, fontWeight: '600' },
 
   // Info rows
@@ -491,17 +413,17 @@ const styles = StyleSheet.create({
   infoRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.sm },
   infoIcon: { fontSize: 18, width: 28 },
   infoLabel: { color: Colors.mutedLight, fontSize: 14, flex: 1 },
-  infoValue: { color: Colors.white, fontSize: 14, fontWeight: '600' },
+  infoValue: { color: Colors.text, fontSize: 14, fontWeight: '600' },
 
   // Docs
   docsStack: { gap: Spacing.sm, marginBottom: Spacing.md },
   docCard: {
     flexDirection: 'row', alignItems: 'center', gap: Spacing.md,
-    backgroundColor: 'rgba(13,21,38,0.8)', borderRadius: Radius.lg,
+    backgroundColor: 'rgba(255,255,255,0.85)', borderRadius: Radius.lg,
     padding: Spacing.md, borderWidth: 1, borderColor: Colors.border,
   },
   docIcon: { fontSize: 24 },
-  docTitle: { color: Colors.white, fontSize: 14, fontWeight: '600' },
+  docTitle: { color: Colors.text, fontSize: 14, fontWeight: '600' },
   docSub: { color: Colors.muted, fontSize: 12, marginTop: 2 },
   docChevron: { color: Colors.muted, fontSize: 22, fontWeight: '300' },
 

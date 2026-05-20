@@ -193,7 +193,7 @@ const styles = StyleSheet.create({
   },
   sosEmoji: { fontSize: 24 },
   title: {
-    color: Colors.white,
+    color: Colors.text,
     fontSize: 20,
     fontWeight: '700',
   },
@@ -216,14 +216,14 @@ const styles = StyleSheet.create({
     gap: Spacing.md,
   },
   actionPressed: {
-    backgroundColor: 'rgba(255,255,255,0.04)',
+    backgroundColor: 'rgba(1,66,192,0.07)',
     borderRadius: Radius.md,
   },
   actionIcon: {
     width: 44,
     height: 44,
     borderRadius: Radius.md,
-    backgroundColor: 'rgba(255,255,255,0.06)',
+    backgroundColor: 'rgba(1,66,192,0.07)',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -232,7 +232,7 @@ const styles = StyleSheet.create({
   },
   actionText: { flex: 1 },
   actionLabel: {
-    color: Colors.white,
+    color: Colors.text,
     fontSize: 15,
     fontWeight: '600',
   },
@@ -250,7 +250,7 @@ const styles = StyleSheet.create({
     marginTop: Spacing.md,
     paddingVertical: Spacing.md,
     borderRadius: Radius.lg,
-    backgroundColor: 'rgba(255,255,255,0.06)',
+    backgroundColor: 'rgba(1,66,192,0.07)',
     borderWidth: 1,
     borderColor: Colors.border,
     alignItems: 'center',

@@ -1,4 +1,5 @@
-import * as BackgroundFetch from 'expo-background-fetch';
+import * as BackgroundTask from 'expo-background-task';
+import { BackgroundTaskResult, BackgroundTaskStatus } from 'expo-background-task';
 import * as Notifications from 'expo-notifications';
 import * as TaskManager from 'expo-task-manager';
 
@@ -23,7 +24,6 @@ function getUpcomingAppointments() {
 TaskManager.defineTask(BACKGROUND_REMINDER_TASK, async () => {
   try {
     const upcoming = getUpcomingAppointments();
-    if (upcoming.length === 0) return BackgroundFetch.BackgroundFetchResult.NoData;
 
     for (const appt of upcoming) {
       const daysLeft = Math.ceil(
@@ -39,9 +39,9 @@ TaskManager.defineTask(BACKGROUND_REMINDER_TASK, async () => {
       });
     }
 
-    return BackgroundFetch.BackgroundFetchResult.NewData;
+    return BackgroundTaskResult.Success;
   } catch {
-    return BackgroundFetch.BackgroundFetchResult.Failed;
+    return BackgroundTaskResult.Failed;
   }
 });
 
@@ -49,18 +49,13 @@ export async function registerBackgroundReminder(): Promise<void> {
   const { granted } = await Notifications.getPermissionsAsync();
   if (!granted) return;
 
-  const status = await BackgroundFetch.getStatusAsync();
-  if (
-    status === BackgroundFetch.BackgroundFetchStatus.Restricted ||
-    status === BackgroundFetch.BackgroundFetchStatus.Denied
-  ) return;
+  const status = await BackgroundTask.getStatusAsync();
+  if (status === BackgroundTaskStatus.Restricted) return;
 
   const isRegistered = await TaskManager.isTaskRegisteredAsync(BACKGROUND_REMINDER_TASK);
   if (isRegistered) return;
 
-  await BackgroundFetch.registerTaskAsync(BACKGROUND_REMINDER_TASK, {
-    minimumInterval: 60 * 60 * 12, // every 12 hours
-    stopOnTerminate: false,
-    startOnBoot: true,
+  await BackgroundTask.registerTaskAsync(BACKGROUND_REMINDER_TASK, {
+    minimumInterval: 12 * 60, // every 12 hours (in minutes)
   });
 }

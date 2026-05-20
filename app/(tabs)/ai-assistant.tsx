@@ -22,7 +22,6 @@ import Animated, {
   withSpring,
   withTiming,
 } from 'react-native-reanimated';
-import Svg, { Path } from 'react-native-svg';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { FordLogo } from '@/components/ford-logo';
@@ -33,9 +32,6 @@ import { useAuthStore } from '@/store/auth';
 
 const { height: SCREEN_H } = Dimensions.get('window');
 const AVATAR_SIZE = Math.min(230, SCREEN_H * 0.27);
-const WAVE_W = AVATAR_SIZE - 32;
-const WAVE_H = 52;
-
 type AiState = 'idle' | 'thinking' | 'speaking';
 type Lang = 'en-US' | 'pt-BR';
 
@@ -46,60 +42,38 @@ const SUGGESTIONS = [
   'Schedule a service',
 ];
 
-// ─── Worklet ─────────────────────────────────────────────────────────────────
+// ─── Equalizer bars (replaces SVG waveform) ──────────────────────────────────
 
-function buildSinePath(
-  w: number, h: number,
-  amp: number, phase: number, offset: number,
-): string {
-  'worklet';
-  const cy = h / 2;
-  const steps = 60;
-  let d = '';
-  for (let i = 0; i <= steps; i++) {
-    const x = (i / steps) * w;
-    const y = cy + Math.sin((i / steps) * Math.PI * 4 + phase + offset) * amp;
-    d += i === 0 ? `M ${x.toFixed(1)} ${y.toFixed(1)}` : ` L ${x.toFixed(1)} ${y.toFixed(1)}`;
-  }
-  return d;
-}
-
-// ─── Siri Waveform ───────────────────────────────────────────────────────────
-
-const AnimatedPath = Animated.createAnimatedComponent(Path);
+const BAR_HEIGHTS = [0.4, 0.7, 1.0, 0.6, 0.85, 0.5, 0.75, 0.35, 0.9, 0.55];
 
 function SiriWaveform({ active }: { active: boolean }) {
-  const phase = useSharedValue(0);
-  const amp = useSharedValue(0);
-
-  useEffect(() => {
-    if (active) {
-      amp.value = withSpring(15, { damping: 10, stiffness: 80 });
-      phase.value = withRepeat(
-        withTiming(Math.PI * 2, { duration: 1100, easing: Easing.linear }),
-        -1, false,
-      );
-    } else {
-      amp.value = withSpring(0, { damping: 14 });
-    }
-  }, [active]);
-
-  const p1 = useAnimatedProps(() => ({
-    d: buildSinePath(WAVE_W, WAVE_H, amp.value, phase.value, 0),
-  }));
-  const p2 = useAnimatedProps(() => ({
-    d: buildSinePath(WAVE_W, WAVE_H, amp.value * 0.62, phase.value, Math.PI * 0.85),
-  }));
-  const p3 = useAnimatedProps(() => ({
-    d: buildSinePath(WAVE_W, WAVE_H, amp.value * 0.36, phase.value, Math.PI * 1.7),
-  }));
+  const bars = BAR_HEIGHTS.map((target, i) => {
+    const h = useSharedValue(4);
+    useEffect(() => {
+      if (active) {
+        h.value = withRepeat(
+          withSequence(
+            withTiming(target * 36, { duration: 300 + i * 40, easing: Easing.inOut(Easing.sin) }),
+            withTiming(4, { duration: 300 + i * 40, easing: Easing.inOut(Easing.sin) }),
+          ),
+          -1, false,
+        );
+      } else {
+        h.value = withTiming(4, { duration: 250 });
+      }
+    }, [active]);
+    return useAnimatedStyle(() => ({ height: h.value }));
+  });
 
   return (
-    <Svg width={WAVE_W} height={WAVE_H} style={styles.waveformSvg}>
-      <AnimatedPath animatedProps={p3} stroke="rgba(51,133,255,0.32)" strokeWidth={2} fill="none" />
-      <AnimatedPath animatedProps={p2} stroke="rgba(51,133,255,0.58)" strokeWidth={2} fill="none" />
-      <AnimatedPath animatedProps={p1} stroke={Colors.blue} strokeWidth={2.5} fill="none" />
-    </Svg>
+    <View style={styles.equalizerRow}>
+      {bars.map((style, i) => (
+        <Animated.View
+          key={i}
+          style={[styles.equalizerBar, style, { opacity: active ? 0.6 + (i % 3) * 0.15 : 0.25 }]}
+        />
+      ))}
+    </View>
   );
 }
 
@@ -358,7 +332,7 @@ export default function AIAssistantScreen() {
           {/* Input bar */}
           <BlurView
             intensity={Platform.OS === 'android' ? 40 : 60}
-            tint="dark"
+            tint="light"
             style={styles.inputBar}
           >
             <TextInput
@@ -367,7 +341,7 @@ export default function AIAssistantScreen() {
               value={input}
               onChangeText={setInput}
               placeholder="Ask Ford AI anything…"
-              placeholderTextColor="rgba(160,174,207,0.4)"
+              placeholderTextColor="rgba(74,94,130,0.5)"
               returnKeyType="send"
               onSubmitEditing={() => send(input)}
               editable={aiState === 'idle'}
@@ -421,7 +395,7 @@ const styles = StyleSheet.create({
     shadowRadius: 6,
     elevation: 4,
   },
-  headerTitle: { color: Colors.white, fontSize: 18, fontWeight: '700' },
+  headerTitle: { color: Colors.text, fontSize: 18, fontWeight: '700' },
   headerRight: { flexDirection: 'row', alignItems: 'center', gap: Spacing.sm },
   langChip: {
     paddingHorizontal: Spacing.sm,
@@ -429,7 +403,7 @@ const styles = StyleSheet.create({
     borderRadius: Radius.pill,
     borderWidth: 1,
     borderColor: Colors.border,
-    backgroundColor: 'rgba(255,255,255,0.05)',
+    backgroundColor: 'rgba(1,66,192,0.07)',
   },
   langChipText: { color: Colors.mutedLight, fontSize: 11, fontWeight: '700', letterSpacing: 0.5 },
   voiceBtn: {
@@ -437,7 +411,7 @@ const styles = StyleSheet.create({
     borderRadius: 17,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'rgba(255,255,255,0.05)',
+    backgroundColor: 'rgba(1,66,192,0.07)',
     borderWidth: 1,
     borderColor: Colors.border,
   },
@@ -471,7 +445,7 @@ const styles = StyleSheet.create({
     width: AVATAR_SIZE,
     height: AVATAR_SIZE,
     borderRadius: AVATAR_SIZE / 2,
-    backgroundColor: 'rgba(10,15,30,0.85)',
+    backgroundColor: 'rgba(1,66,192,0.10)',
     borderWidth: 1,
     borderColor: 'rgba(1,66,192,0.25)',
     alignItems: 'center',
@@ -500,7 +474,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   caption: {
-    color: Colors.white,
+    color: Colors.text,
     fontSize: 15,
     lineHeight: 22,
     textAlign: 'center',
@@ -538,14 +512,15 @@ const styles = StyleSheet.create({
     alignItems: 'flex-end',
     gap: Spacing.sm,
     paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.sm,
+    paddingTop: Spacing.sm,
+    paddingBottom: 88,
     borderTopWidth: 1,
     borderColor: Colors.border,
-    backgroundColor: Platform.OS === 'android' ? 'rgba(10,15,30,0.97)' : 'transparent',
+    backgroundColor: Platform.OS === 'android' ? 'rgba(238,242,255,0.97)' : 'transparent',
   },
   textInput: {
     flex: 1,
-    color: Colors.white,
+    color: Colors.text,
     fontSize: 15,
     maxHeight: 90,
     paddingTop: Spacing.sm,
@@ -561,4 +536,7 @@ const styles = StyleSheet.create({
   },
   sendBtnDisabled: { backgroundColor: Colors.border },
   sendIcon: { color: Colors.white, fontSize: 18, fontWeight: '700', marginTop: -1 },
+  equalizerRow: { flexDirection: 'row', alignItems: 'center', gap: 3, height: 36 },
+  equalizerBar: { width: 3, borderRadius: 2, backgroundColor: Colors.blue },
+  waveformSvg: {},
 });

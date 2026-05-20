@@ -48,7 +48,7 @@ export function GlassInput({ label, style, ...props }: Props) {
 
         <BlurView
           intensity={Platform.OS === 'android' ? 20 : 40}
-          tint="dark"
+          tint="light"
           style={styles.blur}
         >
           <TextInput
@@ -85,13 +85,13 @@ const styles = StyleSheet.create({
     borderRadius: Radius.md,
     overflow: 'hidden',
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.12)',
-    backgroundColor: Platform.OS === 'android' ? 'rgba(13,21,38,0.9)' : 'transparent',
+    borderColor: 'rgba(1,66,192,0.20)',
+    backgroundColor: Platform.OS === 'android' ? 'rgba(238,242,255,0.90)' : 'transparent',
   },
   input: {
     paddingHorizontal: Spacing.md,
     paddingVertical: Spacing.sm + 4,
-    color: Colors.white,
+    color: Colors.text,
     fontSize: 15,
   },
 });

@@ -82,7 +82,7 @@ export default function SignupScreen() {
 
               <BlurView
                 intensity={Platform.OS === 'android' ? 30 : 60}
-                tint="dark"
+                tint="light"
                 style={styles.card}
               >
                 <View style={styles.cardInner}>
@@ -146,8 +146,8 @@ const styles = StyleSheet.create({
     borderRadius: Radius.xl,
     overflow: 'hidden',
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.13)',
-    backgroundColor: Platform.OS === 'android' ? 'rgba(8,12,28,0.88)' : 'transparent',
+    borderColor: 'rgba(1,66,192,0.20)',
+    backgroundColor: Platform.OS === 'android' ? 'rgba(238,242,255,0.95)' : 'transparent',
   },
   cardInner: { padding: Spacing.lg },
   title: { ...Typography.heading, fontSize: 26, marginBottom: 4 },

@@ -18,14 +18,14 @@ describe('auth store — persist config', () => {
     expect(useAuthStore.persist.getOptions().name).toBe('ford-auth');
   });
 
-  it('partialize includes user, vehicle, isAuthenticated, hasOnboarded', () => {
+  it('partialize includes user and vehicle but not session flags', () => {
     const fullState = useAuthStore.getState();
     const partialize = useAuthStore.persist.getOptions().partialize!;
     const sliced = partialize(fullState);
     expect(sliced).toHaveProperty('user');
     expect(sliced).toHaveProperty('vehicle');
-    expect(sliced).toHaveProperty('isAuthenticated');
-    expect(sliced).toHaveProperty('hasOnboarded');
+    expect(sliced).not.toHaveProperty('isAuthenticated');
+    expect(sliced).not.toHaveProperty('hasOnboarded');
   });
 
   it('partialize excludes action functions', () => {

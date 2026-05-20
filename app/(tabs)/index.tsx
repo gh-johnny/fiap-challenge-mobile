@@ -2,6 +2,7 @@ import * as Haptics from 'expo-haptics';
 import * as Notifications from 'expo-notifications';
 import { BlurView } from 'expo-blur';
 import { Ionicons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 import { Platform, Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
 import Animated, {
@@ -33,8 +34,8 @@ function QuickAction({ icon, label, onPress }: { icon: React.ComponentProps<type
     >
       <BlurView
         intensity={Platform.OS === 'android' ? 0 : 40}
-        tint="dark"
-        style={[styles.actionBlur, Platform.OS === 'android' && { backgroundColor: 'rgba(13,21,38,0.85)' }]}
+        tint="light"
+        style={[styles.actionBlur, Platform.OS === 'android' && { backgroundColor: 'rgba(238,242,255,0.90)' }]}
       >
         <Ionicons name={icon} size={26} color={Colors.mutedLight} />
         <Text style={styles.actionLabel}>{label}</Text>
@@ -53,7 +54,8 @@ function StatRow({ label, value, accent }: { label: string; value: string; accen
 }
 
 export default function HomeScreen() {
-  const { user, vehicle } = useAuthStore();
+  const { user, vehicle, logout } = useAuthStore();
+  const router = useRouter();
   const firstName = user?.name?.split(' ')[0] ?? 'Driver';
   const { isAssistModeOn, toggleAssistMode, persistentNotifId, setPersistentNotifId } = useSosStore();
   const { tiltX, tiltY } = useGyroTilt();
@@ -124,9 +126,16 @@ export default function HomeScreen() {
           {/* Header */}
           <Animated.View style={[styles.header, headerStyle]}>
             <FordLogo width={120} height={50} />
-            <View style={styles.avatar}>
+            <Pressable
+              style={({ pressed }) => [styles.avatar, pressed && { opacity: 0.7 }]}
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                logout();
+                router.replace('/(auth)/login');
+              }}
+            >
               <Text style={styles.avatarText}>{firstName[0].toUpperCase()}</Text>
-            </View>
+            </Pressable>
           </Animated.View>
 
           <Animated.View style={contentStyle}>
@@ -246,16 +255,16 @@ const styles = StyleSheet.create({
     alignItems: 'center', justifyContent: 'center',
     shadowColor: Colors.blue,
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.5,
+    shadowOpacity: 0.15,
     shadowRadius: 8,
     elevation: 6,
   },
   avatarText: { color: Colors.white, fontWeight: '700', fontSize: 16 },
   greeting: { marginBottom: Spacing.lg },
   greetingSmall: { ...Typography.body, fontSize: 14 },
-  greetingName: { color: Colors.white, fontSize: 32, fontWeight: '800' },
+  greetingName: { color: Colors.text, fontSize: 32, fontWeight: '800' },
   noVehicleCard: {
-    backgroundColor: 'rgba(10,15,30,0.6)',
+    backgroundColor: 'rgba(255,255,255,0.8)',
     borderRadius: Radius.xl,
     padding: Spacing.xl,
     borderWidth: 1,
@@ -269,7 +278,7 @@ const styles = StyleSheet.create({
   noVehicleSub: { ...Typography.body, fontSize: 13, textAlign: 'center' },
   sectionTitle: { ...Typography.label, fontSize: 11, letterSpacing: 2, marginBottom: Spacing.sm, marginTop: Spacing.xs },
   card: {
-    backgroundColor: 'rgba(13,21,38,0.8)',
+    backgroundColor: 'rgba(255,255,255,0.85)',
     borderRadius: Radius.lg,
     padding: Spacing.lg,
     borderWidth: 1,
@@ -279,14 +288,14 @@ const styles = StyleSheet.create({
   divider: { height: 1, backgroundColor: Colors.border, marginVertical: Spacing.md },
   statRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   statLabel: { ...Typography.body, fontSize: 14 },
-  statValue: { color: Colors.white, fontWeight: '600', fontSize: 14 },
+  statValue: { color: Colors.text, fontWeight: '600', fontSize: 14 },
   actionsRow: { flexDirection: 'row', gap: Spacing.sm },
   actionCard: {
     flex: 1,
     borderRadius: Radius.lg,
     overflow: 'hidden',
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.12)',
+    borderColor: 'rgba(1,66,192,0.20)',
   },
   actionBlur: {
     padding: Spacing.md,
@@ -295,7 +304,7 @@ const styles = StyleSheet.create({
   },
   actionLabel: { color: Colors.mutedLight, fontSize: 11, fontWeight: '600', textAlign: 'center' },
   assistCard: {
-    backgroundColor: 'rgba(13,21,38,0.8)',
+    backgroundColor: 'rgba(255,255,255,0.85)',
     borderRadius: Radius.lg,
     padding: Spacing.md,
     borderWidth: 1,
@@ -326,7 +335,7 @@ const styles = StyleSheet.create({
     elevation: 4,
   },
   assistTitle: {
-    color: Colors.white,
+    color: Colors.text,
     fontSize: 15,
     fontWeight: '600',
   },
@@ -352,7 +361,7 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(255,179,0,0.35)',
   },
   baroIcon: { fontSize: 28, marginTop: 2 },
-  baroTitle: { color: Colors.white, fontWeight: '700', fontSize: 14, marginBottom: 3 },
+  baroTitle: { color: Colors.text, fontWeight: '700', fontSize: 14, marginBottom: 3 },
   baroMessage: { color: Colors.mutedLight, fontSize: 12, lineHeight: 18 },
   baroPressure: { color: Colors.muted, fontSize: 10, marginTop: 4, fontWeight: '600' },
 });

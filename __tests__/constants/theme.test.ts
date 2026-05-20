@@ -62,7 +62,7 @@ describe('Typography — structure', () => {
   it('caption fontSize < body fontSize', () => {
     expect(Typography.caption.fontSize).toBeLessThan(Typography.body.fontSize);
   });
-  it('heading color is white', () => expect(Typography.heading.color).toBe(Colors.white));
+  it('heading color is text', () => expect(Typography.heading.color).toBe(Colors.text));
   it('body color is mutedLight', () => expect(Typography.body.color).toBe(Colors.mutedLight));
   it('label has letterSpacing', () => expect(Typography.label).toBeDefined());
 });

@@ -1,33 +1,20 @@
 import { useEffect } from 'react';
 import { Dimensions } from 'react-native';
+import { Easing, useSharedValue, withDelay, withTiming } from 'react-native-reanimated';
 import {
-  Easing,
-  useSharedValue,
-  withDelay,
-  withTiming,
-} from 'react-native-reanimated';
-import {
-  BlurMask,
-  Canvas,
-  Circle,
-  Fill,
-  Group,
-  Line,
-  LinearGradient,
-  Paint,
-  Path,
-  RoundedRect,
-  vec,
+  BlurMask, Canvas, Circle, Group, Line, LinearGradient,
+  Paint, Path, RoundedRect, vec,
 } from '@shopify/react-native-skia';
-
-// ─── SVG imports (CarSilhouette only) ─────────────────────────────────────────
 import Animated, { useAnimatedProps } from 'react-native-reanimated';
-import Svg, { Circle as SvgCircle, Line as SvgLine, Path as SvgPath, Rect as SvgRect } from 'react-native-svg';
+import Svg, {
+  Circle as SvgCircle,
+  Line as SvgLine,
+  Path as SvgPath,
+  Rect as SvgRect,
+} from 'react-native-svg';
 
 const { width } = Dimensions.get('window');
 const SZ = Math.min(width * 0.78, 300);
-
-// ─── Shared entrance hook ─────────────────────────────────────────────────────
 
 function useEntrance(delay = 0, dur = 700) {
   const opacity = useSharedValue(0);
@@ -40,173 +27,172 @@ function useEntrance(delay = 0, dur = 700) {
 // ─── Slide 1 — Schedule ──────────────────────────────────────────────────────
 
 export function ScheduleIllustration() {
-  const bg     = useEntrance(0, 600);
-  const card   = useEntrance(200, 500);
-  const detail = useEntrance(500, 500);
-  const badge  = useEntrance(700, 500);
+  const bg   = useEntrance(0, 600);
+  const card = useEntrance(150, 500);
+  const grid = useEntrance(380, 500);
+  const appt = useEntrance(650, 500);
 
   const cx = SZ / 2;
-  const cy = SZ / 2;
 
-  // Card dimensions
-  const cX = SZ * 0.1;
-  const cY = SZ * 0.16;
-  const cW = SZ * 0.72;
-  const cH = SZ * 0.58;
-  const hH = SZ * 0.16; // header height
+  // Card
+  const cX = SZ * 0.07, cY = SZ * 0.08;
+  const cW = SZ * 0.86, cH = SZ * 0.76;
+  const hH = SZ * 0.17;
 
-  // Clock badge
-  const bCx = SZ * 0.76;
-  const bCy = SZ * 0.76;
-  const bR  = SZ * 0.12;
+  // Grid — 7 cols × 5 rows of cells
+  const COLS = 7, ROWS = 5;
+  const gPad = SZ * 0.032;
+  const cGap = SZ * 0.008;
+  const cellW = (cW - gPad * 2 - cGap * (COLS - 1)) / COLS;
+  const cellH = SZ * 0.068;
+  const gX = cX + gPad;
+  const gY = cY + hH + SZ * 0.048;
+  const HI_ROW = 2, HI_COL = 4;
+
+  // Appointment bar
+  const apptY = gY + ROWS * (cellH + cGap) + SZ * 0.016;
+  const apptH = SZ * 0.092;
 
   return (
     <Canvas style={{ width: SZ, height: SZ }}>
-      {/* ── Ambient blobs ── */}
+      {/* Ambient blobs */}
       <Group opacity={bg}>
-        <Circle cx={cx} cy={cy - SZ * 0.05} r={SZ * 0.42}>
-          <Paint color="rgba(51,133,255,0.38)">
+        <Circle cx={cx} cy={cx - SZ * 0.05} r={SZ * 0.42}>
+          <Paint color="rgba(51,133,255,0.28)">
             <BlurMask blur={SZ * 0.18} style="normal" />
           </Paint>
         </Circle>
-        <Circle cx={SZ * 0.75} cy={SZ * 0.22} r={SZ * 0.22}>
-          <Paint color="rgba(107,53,240,0.30)">
-            <BlurMask blur={SZ * 0.12} style="normal" />
-          </Paint>
-        </Circle>
-        <Circle cx={SZ * 0.18} cy={SZ * 0.72} r={SZ * 0.18}>
-          <Paint color="rgba(1,66,192,0.28)">
+        <Circle cx={SZ * 0.80} cy={SZ * 0.14} r={SZ * 0.16}>
+          <Paint color="rgba(100,50,240,0.20)">
             <BlurMask blur={SZ * 0.10} style="normal" />
           </Paint>
         </Circle>
       </Group>
 
-      {/* ── Calendar card ── */}
+      {/* Card */}
       <Group opacity={card}>
-        {/* Card body */}
-        <RoundedRect x={cX} y={cY} width={cW} height={cH} r={SZ * 0.055}>
+        <RoundedRect x={cX + SZ*0.01} y={cY + SZ*0.018} width={cW} height={cH} r={SZ * 0.045}>
+          <Paint color="rgba(0,0,0,0.28)">
+            <BlurMask blur={SZ * 0.04} style="normal" />
+          </Paint>
+        </RoundedRect>
+        <RoundedRect x={cX} y={cY} width={cW} height={cH} r={SZ * 0.045}>
           <LinearGradient
-            start={vec(cX, cY)}
-            end={vec(cX, cY + cH)}
-            colors={['rgba(13,26,58,0.96)', 'rgba(8,16,40,0.96)']}
+            start={vec(cX, cY)} end={vec(cX, cY + cH)}
+            colors={['rgba(10,20,50,0.98)', 'rgba(5,12,28,0.98)']}
           />
         </RoundedRect>
-        {/* Card border */}
-        <RoundedRect x={cX} y={cY} width={cW} height={cH} r={SZ * 0.055}>
-          <Paint color="rgba(255,255,255,0.10)" style="stroke" strokeWidth={1.2} />
+        <RoundedRect x={cX} y={cY} width={cW} height={cH} r={SZ * 0.045}>
+          <Paint color="rgba(255,255,255,0.08)" style="stroke" strokeWidth={1} />
         </RoundedRect>
 
-        {/* Header band */}
-        <RoundedRect x={cX} y={cY} width={cW} height={hH} r={SZ * 0.055}>
+        {/* Blue header */}
+        <RoundedRect x={cX} y={cY} width={cW} height={hH} r={SZ * 0.045}>
           <LinearGradient
-            start={vec(cX, cY)}
-            end={vec(cX + cW, cY)}
-            colors={['#0142C0', '#3385FF']}
+            start={vec(cX, cY)} end={vec(cX + cW, cY)}
+            colors={['#0142C0', '#1E5FDC']}
           />
         </RoundedRect>
-        {/* header bottom fill (covers lower rounded corners of header) */}
         <RoundedRect x={cX} y={cY + hH * 0.55} width={cW} height={hH * 0.45} r={0}>
           <LinearGradient
-            start={vec(cX, cY + hH * 0.55)}
-            end={vec(cX + cW, cY + hH * 0.55)}
-            colors={['#0142C0', '#3385FF']}
+            start={vec(cX, cY)} end={vec(cX + cW, cY)}
+            colors={['#0142C0', '#1E5FDC']}
           />
         </RoundedRect>
 
-        {/* Header label line */}
-        <Line p1={vec(cX + cW * 0.13, cY + hH * 0.55)} p2={vec(cX + cW * 0.55, cY + hH * 0.55)}>
-          <Paint color="rgba(255,255,255,0.70)" strokeWidth={2.5} strokeCap="round" />
+        {/* Month label lines */}
+        <Line p1={vec(cX + cW*0.07, cY + hH*0.36)} p2={vec(cX + cW*0.44, cY + hH*0.36)}>
+          <Paint color="rgba(255,255,255,0.95)" strokeWidth={3} strokeCap="round" />
+        </Line>
+        <Line p1={vec(cX + cW*0.07, cY + hH*0.66)} p2={vec(cX + cW*0.26, cY + hH*0.66)}>
+          <Paint color="rgba(255,255,255,0.50)" strokeWidth={2} strokeCap="round" />
         </Line>
 
-        {/* Ring knobs */}
-        {[0.28, 0.50, 0.72].map((t, i) => (
-          <Circle key={i} cx={cX + cW * t} cy={cY} r={SZ * 0.022}>
-            <Paint color="#0A1830" />
-          </Circle>
-        ))}
-        {[0.28, 0.50, 0.72].map((t, i) => (
-          <Circle key={i} cx={cX + cW * t} cy={cY} r={SZ * 0.022}>
-            <Paint color="rgba(51,133,255,0.9)" style="stroke" strokeWidth={2} />
-          </Circle>
-        ))}
-      </Group>
-
-      {/* ── Calendar grid + highlight ── */}
-      <Group opacity={detail}>
-        {/* Grid dots 4×3 */}
-        {[0, 1, 2, 3].map(col =>
-          [0, 1, 2].map(row => (
-            <Circle
-              key={`${col}-${row}`}
-              cx={cX + cW * (0.16 + col * 0.22)}
-              cy={cY + hH + SZ * 0.09 + row * SZ * 0.1}
-              r={SZ * 0.014}
-            >
-              <Paint color="rgba(160,174,207,0.4)" />
-            </Circle>
-          ))
-        )}
-
-        {/* Highlighted cell with glow */}
-        <RoundedRect
-          x={cX + cW * 0.52}
-          y={cY + hH + SZ * 0.21}
-          width={cW * 0.22}
-          height={SZ * 0.09}
-          r={SZ * 0.025}
-        >
-          <Paint color="rgba(51,133,255,0.25)">
-            <BlurMask blur={4} style="normal" />
-          </Paint>
-        </RoundedRect>
-        <RoundedRect
-          x={cX + cW * 0.52}
-          y={cY + hH + SZ * 0.21}
-          width={cW * 0.22}
-          height={SZ * 0.09}
-          r={SZ * 0.025}
-        >
-          <Paint color="rgba(51,133,255,0.85)" style="stroke" strokeWidth={1.5} />
-        </RoundedRect>
-
-        {/* Checkmark */}
-        <Path
-          path={`M ${cX + cW * 0.558} ${cY + hH + SZ * 0.265} L ${cX + cW * 0.590} ${cY + hH + SZ * 0.298} L ${cX + cW * 0.645} ${cY + hH + SZ * 0.234}`}
-        >
-          <Paint color="rgba(255,255,255,0.95)" style="stroke" strokeWidth={2.8} strokeCap="round" strokeJoin="round" />
+        {/* Chevron */}
+        <Path path={`M ${cX+cW*0.84} ${cY+hH*0.28} L ${cX+cW*0.90} ${cY+hH*0.52} L ${cX+cW*0.84} ${cY+hH*0.76}`}>
+          <Paint color="rgba(255,255,255,0.85)" style="stroke" strokeWidth={2.2} strokeCap="round" strokeJoin="round" />
         </Path>
+
+        {/* Day-of-week dots */}
+        {Array.from({ length: COLS }).map((_, c) => (
+          <Circle key={c}
+            cx={gX + c * (cellW + cGap) + cellW * 0.5}
+            cy={cY + hH + SZ * 0.024}
+            r={SZ * 0.008}
+          >
+            <Paint color="rgba(107,122,163,0.55)" />
+          </Circle>
+        ))}
       </Group>
 
-      {/* ── Clock badge ── */}
-      <Group opacity={badge}>
-        {/* Glow ring */}
-        <Circle cx={bCx} cy={bCy} r={bR + SZ * 0.04}>
-          <Paint color="rgba(51,133,255,0.22)">
+      {/* Grid cells */}
+      <Group opacity={grid}>
+        {Array.from({ length: ROWS }).map((_, r) =>
+          Array.from({ length: COLS }).map((_, c) => {
+            const isHi   = r === HI_ROW && c === HI_COL;
+            const isSoft = (r === HI_ROW && (c === HI_COL - 1 || c === HI_COL + 1))
+                        || (r === HI_ROW - 1 && c === HI_COL);
+            const x = gX + c * (cellW + cGap);
+            const y = gY + r * (cellH + cGap);
+            return (
+              <Group key={`${r}-${c}`}>
+                {isHi && (
+                  <RoundedRect x={x} y={y} width={cellW} height={cellH} r={SZ * 0.014}>
+                    <Paint color="rgba(51,133,255,0.45)">
+                      <BlurMask blur={7} style="normal" />
+                    </Paint>
+                  </RoundedRect>
+                )}
+                <RoundedRect x={x} y={y} width={cellW} height={cellH} r={SZ * 0.014}>
+                  <Paint color={
+                    isHi   ? 'rgba(1,66,192,0.92)' :
+                    isSoft ? 'rgba(255,255,255,0.09)' :
+                             'rgba(255,255,255,0.04)'
+                  } />
+                </RoundedRect>
+                <Line
+                  p1={vec(x + SZ*0.006, y + cellH * 0.50)}
+                  p2={vec(x + cellW - SZ*0.006, y + cellH * 0.50)}
+                >
+                  <Paint
+                    color={isHi ? 'rgba(255,255,255,0.92)' : isSoft ? 'rgba(255,255,255,0.45)' : 'rgba(255,255,255,0.16)'}
+                    strokeWidth={isHi ? 3 : isSoft ? 2.2 : 1.6}
+                    strokeCap="round"
+                  />
+                </Line>
+              </Group>
+            );
+          })
+        )}
+      </Group>
+
+      {/* Appointment bar */}
+      <Group opacity={appt}>
+        <RoundedRect x={cX + gPad} y={apptY} width={cW - gPad * 2} height={apptH} r={SZ * 0.022}>
+          <Paint color="rgba(1,66,192,0.40)">
             <BlurMask blur={10} style="normal" />
           </Paint>
-        </Circle>
-        {/* Badge body */}
-        <Circle cx={bCx} cy={bCy} r={bR}>
+        </RoundedRect>
+        <RoundedRect x={cX + gPad} y={apptY} width={cW - gPad * 2} height={apptH} r={SZ * 0.022}>
           <LinearGradient
-            start={vec(bCx - bR, bCy - bR)}
-            end={vec(bCx + bR, bCy + bR)}
-            colors={['rgba(13,21,38,0.98)', 'rgba(10,26,60,0.98)']}
+            start={vec(cX + gPad, apptY)} end={vec(cX + cW - gPad, apptY)}
+            colors={['rgba(1,66,192,0.92)', 'rgba(30,95,220,0.92)']}
           />
-        </Circle>
-        <Circle cx={bCx} cy={bCy} r={bR}>
-          <Paint color="rgba(51,133,255,0.45)" style="stroke" strokeWidth={1.5} />
-        </Circle>
-        {/* Hour hand */}
-        <Line p1={vec(bCx, bCy)} p2={vec(bCx, bCy - bR * 0.58)}>
-          <Paint color="rgba(255,255,255,0.90)" strokeWidth={2.2} strokeCap="round" />
+        </RoundedRect>
+        <RoundedRect x={cX + gPad} y={apptY} width={cW - gPad * 2} height={apptH} r={SZ * 0.022}>
+          <Paint color="rgba(100,160,255,0.28)" style="stroke" strokeWidth={1} />
+        </RoundedRect>
+        {/* Accent bar */}
+        <RoundedRect x={cX+gPad+SZ*0.007} y={apptY+SZ*0.009} width={SZ*0.014} height={apptH-SZ*0.018} r={SZ*0.007}>
+          <Paint color="rgba(255,255,255,0.95)" />
+        </RoundedRect>
+        {/* Text lines */}
+        <Line p1={vec(cX+gPad+SZ*0.036, apptY+apptH*0.35)} p2={vec(cX+cW-gPad-SZ*0.10, apptY+apptH*0.35)}>
+          <Paint color="rgba(255,255,255,0.95)" strokeWidth={2.8} strokeCap="round" />
         </Line>
-        {/* Minute hand */}
-        <Line p1={vec(bCx, bCy)} p2={vec(bCx + bR * 0.48, bCy)}>
-          <Paint color="rgba(51,133,255,0.90)" strokeWidth={1.8} strokeCap="round" />
+        <Line p1={vec(cX+gPad+SZ*0.036, apptY+apptH*0.68)} p2={vec(cX+gPad+SZ*0.036+(cW-gPad*2)*0.42, apptY+apptH*0.68)}>
+          <Paint color="rgba(255,255,255,0.52)" strokeWidth={1.8} strokeCap="round" />
         </Line>
-        <Circle cx={bCx} cy={bCy} r={SZ * 0.012}>
-          <Paint color="rgba(255,255,255,0.90)" />
-        </Circle>
       </Group>
     </Canvas>
   );
@@ -215,229 +201,217 @@ export function ScheduleIllustration() {
 // ─── Slide 2 — Track ─────────────────────────────────────────────────────────
 
 export function TrackIllustration() {
-  const bg   = useEntrance(0, 600);
-  const car  = useEntrance(200, 600);
-  const pin  = useEntrance(600, 500);
+  const bg  = useEntrance(0, 600);
+  const car = useEntrance(200, 700);
+  const pin = useEntrance(750, 500);
 
   const cx = SZ / 2;
 
-  // Car body coords (scaled to SZ)
-  const carY  = SZ * 0.44;
-  const carH  = SZ * 0.22;
-  const carX  = SZ * 0.10;
-  const carW  = SZ * 0.80;
+  // Car geometry — proper sedan proportions
+  const hoodY   = SZ * 0.48;  // door-top / hood / trunk level
+  const roofY   = SZ * 0.30;  // cabin roof level
+  const carBotY = SZ * 0.63;  // body bottom (between wheels)
+  const cL      = SZ * 0.06;  // front bumper x
+  const cR      = SZ * 0.94;  // rear bumper x
+  const wsBaseX = SZ * 0.28;  // windshield base (hood–A-pillar junction)
+  const roofSX  = SZ * 0.37;  // A-pillar top / roof start
+  const roofEX  = SZ * 0.70;  // C-pillar top / roof end
+  const cwBaseX = SZ * 0.79;  // C-pillar base / rear-window bottom
+  const bPilX   = SZ * 0.535; // B-pillar x
+
+  const fWX = SZ * 0.23, rWX = SZ * 0.78;
+  const wCY = SZ * 0.67, wR  = SZ * 0.082;
+
+  const roadY = SZ * 0.80;
+
+  const body = [
+    `M ${cL} ${carBotY}`,
+    `L ${cL} ${hoodY + SZ*0.042}`,
+    `Q ${cL+SZ*0.028} ${hoodY} ${cL+SZ*0.090} ${hoodY}`,
+    `L ${wsBaseX} ${hoodY - SZ*0.022}`,
+    `L ${roofSX} ${roofY}`,
+    `L ${roofEX} ${roofY}`,
+    `L ${cwBaseX} ${hoodY - SZ*0.016}`,
+    `L ${cR-SZ*0.090} ${hoodY}`,
+    `Q ${cR-SZ*0.028} ${hoodY} ${cR} ${hoodY+SZ*0.042}`,
+    `L ${cR} ${carBotY} Z`,
+  ].join(' ');
 
   return (
     <Canvas style={{ width: SZ, height: SZ }}>
-      {/* ── Ambient blobs ── */}
+      {/* Ambient blobs */}
       <Group opacity={bg}>
-        <Circle cx={cx} cy={SZ * 0.62} r={SZ * 0.38}>
-          <Paint color="rgba(1,66,192,0.35)">
+        <Circle cx={cx} cy={SZ * 0.58} r={SZ * 0.38}>
+          <Paint color="rgba(1,66,192,0.28)">
             <BlurMask blur={SZ * 0.16} style="normal" />
           </Paint>
         </Circle>
-        <Circle cx={SZ * 0.22} cy={SZ * 0.25} r={SZ * 0.20}>
-          <Paint color="rgba(107,53,240,0.28)">
-            <BlurMask blur={SZ * 0.12} style="normal" />
-          </Paint>
-        </Circle>
-        <Circle cx={SZ * 0.80} cy={SZ * 0.30} r={SZ * 0.15}>
-          <Paint color="rgba(51,133,255,0.25)">
+        <Circle cx={SZ * 0.20} cy={SZ * 0.24} r={SZ * 0.18}>
+          <Paint color="rgba(100,50,240,0.20)">
             <BlurMask blur={SZ * 0.10} style="normal" />
           </Paint>
         </Circle>
+        <Circle cx={SZ * 0.82} cy={SZ * 0.26} r={SZ * 0.14}>
+          <Paint color="rgba(51,133,255,0.18)">
+            <BlurMask blur={SZ * 0.08} style="normal" />
+          </Paint>
+        </Circle>
       </Group>
 
-      {/* ── Road ── */}
+      {/* Car + road */}
       <Group opacity={car}>
-        <Path path={`M ${SZ * 0.0} ${SZ * 0.72} Q ${cx} ${SZ * 0.68} ${SZ} ${SZ * 0.72}`}>
-          <Paint color="rgba(255,255,255,0.08)" style="stroke" strokeWidth={SZ * 0.08} strokeCap="butt" />
+        {/* Ground glow */}
+        <Circle cx={cx} cy={wCY + SZ * 0.06} r={SZ * 0.30}>
+          <Paint color="rgba(1,66,192,0.18)">
+            <BlurMask blur={SZ * 0.10} style="normal" />
+          </Paint>
+        </Circle>
+
+        {/* Road */}
+        <Path path={`M ${SZ*0.02} ${roadY} Q ${cx} ${roadY-SZ*0.06} ${SZ*0.98} ${roadY}`}>
+          <Paint color="rgba(255,255,255,0.07)" style="stroke" strokeWidth={SZ*0.075} strokeCap="butt" />
         </Path>
-        {/* Road dashes */}
-        {[0.22, 0.44, 0.66].map((t, i) => (
-          <Line key={i} p1={vec(SZ * t, SZ * 0.706)} p2={vec(SZ * (t + 0.10), SZ * 0.706)}>
-            <Paint color="rgba(51,133,255,0.55)" strokeWidth={2} strokeCap="round" />
+        {[0.20, 0.43, 0.66].map((t, i) => (
+          <Line key={i} p1={vec(SZ*t, roadY - SZ*0.002)} p2={vec(SZ*(t+0.10), roadY - SZ*0.002)}>
+            <Paint color="rgba(51,133,255,0.50)" strokeWidth={2} strokeCap="round" />
           </Line>
         ))}
 
-        {/* Car body — solid filled shape */}
-        <Path
-          path={`M ${carX} ${carY + carH}
-                 L ${carX} ${carY + carH * 0.45}
-                 Q ${carX + carW * 0.08} ${carY} ${carX + carW * 0.22} ${carY - carH * 0.18}
-                 L ${carX + carW * 0.52} ${carY - carH * 0.44}
-                 Q ${carX + carW * 0.62} ${carY - carH * 0.55} ${carX + carW * 0.72} ${carY - carH * 0.55}
-                 L ${carX + carW * 0.88} ${carY - carH * 0.18}
-                 Q ${carX + carW * 0.96} ${carY} ${carX + carW} ${carY + carH * 0.45}
-                 L ${carX + carW} ${carY + carH} Z`}
-        >
+        {/* Car body */}
+        <Path path={body}>
           <LinearGradient
-            start={vec(carX, carY - carH * 0.55)}
-            end={vec(carX, carY + carH)}
-            colors={['#0057C8', '#002A7A']}
+            start={vec(cx, roofY)} end={vec(cx, carBotY)}
+            colors={['#0150D4', '#00287A']}
           />
         </Path>
-        {/* Car body border */}
-        <Path
-          path={`M ${carX} ${carY + carH}
-                 L ${carX} ${carY + carH * 0.45}
-                 Q ${carX + carW * 0.08} ${carY} ${carX + carW * 0.22} ${carY - carH * 0.18}
-                 L ${carX + carW * 0.52} ${carY - carH * 0.44}
-                 Q ${carX + carW * 0.62} ${carY - carH * 0.55} ${carX + carW * 0.72} ${carY - carH * 0.55}
-                 L ${carX + carW * 0.88} ${carY - carH * 0.18}
-                 Q ${carX + carW * 0.96} ${carY} ${carX + carW} ${carY + carH * 0.45}
-                 L ${carX + carW} ${carY + carH} Z`}
-        >
-          <Paint color="rgba(51,133,255,0.70)" style="stroke" strokeWidth={2} />
+        <Path path={body}>
+          <Paint color="rgba(80,150,255,0.55)" style="stroke" strokeWidth={1.8} />
         </Path>
 
-        {/* Windshield fill */}
-        <Path
-          path={`M ${carX + carW * 0.22} ${carY - carH * 0.18}
-                 L ${carX + carW * 0.52} ${carY - carH * 0.44}
-                 Q ${carX + carW * 0.62} ${carY - carH * 0.55} ${carX + carW * 0.72} ${carY - carH * 0.55}
-                 L ${carX + carW * 0.72} ${carY}
-                 L ${carX + carW * 0.22} ${carY} Z`}
-        >
+        {/* Hood gloss highlight */}
+        <Path path={`M ${cL+SZ*0.09} ${hoodY} L ${wsBaseX} ${hoodY-SZ*0.022} L ${wsBaseX-SZ*0.04} ${hoodY} Z`}>
+          <LinearGradient
+            start={vec(cL, roofY)} end={vec(cL, hoodY)}
+            colors={['rgba(255,255,255,0.18)', 'rgba(255,255,255,0.02)']}
+          />
+        </Path>
+
+        {/* Front glass (windshield + front side window) */}
+        <Path path={`M ${wsBaseX} ${hoodY-SZ*0.022} L ${roofSX} ${roofY} L ${bPilX} ${roofY} L ${bPilX} ${hoodY-SZ*0.022} Z`}>
+          <Paint color="rgba(51,133,255,0.28)" />
+        </Path>
+        {/* Rear glass (rear side window) */}
+        <Path path={`M ${bPilX} ${roofY} L ${roofEX} ${roofY} L ${cwBaseX} ${hoodY-SZ*0.016} L ${bPilX} ${hoodY-SZ*0.022} Z`}>
           <Paint color="rgba(51,133,255,0.22)" />
         </Path>
+        {/* Glass top edge highlight */}
+        <Path path={`M ${wsBaseX} ${hoodY-SZ*0.022} L ${roofSX} ${roofY} L ${roofEX} ${roofY} L ${cwBaseX} ${hoodY-SZ*0.016}`}>
+          <Paint color="rgba(140,195,255,0.55)" style="stroke" strokeWidth={1.5} strokeCap="round" />
+        </Path>
 
-        {/* Door line */}
-        <Line
-          p1={vec(carX + carW * 0.52, carY - carH * 0.44)}
-          p2={vec(carX + carW * 0.52, carY + carH)}
-        >
-          <Paint color="rgba(255,255,255,0.28)" strokeWidth={1.8} />
+        {/* B-pillar (opaque column between windows) */}
+        <Line p1={vec(bPilX, roofY)} p2={vec(bPilX, hoodY - SZ*0.018)}>
+          <Paint color="rgba(0,22,72,0.96)" strokeWidth={SZ * 0.017} />
         </Line>
+        {/* Door division line below beltline */}
+        <Line p1={vec(bPilX, hoodY - SZ*0.018)} p2={vec(bPilX, carBotY)}>
+          <Paint color="rgba(255,255,255,0.18)" strokeWidth={1.4} />
+        </Line>
+
         {/* Door handle */}
-        <Line
-          p1={vec(carX + carW * 0.58, carY + carH * 0.32)}
-          p2={vec(carX + carW * 0.70, carY + carH * 0.32)}
-        >
-          <Paint color="rgba(255,255,255,0.85)" strokeWidth={3} strokeCap="round" />
+        <Line p1={vec(bPilX+SZ*0.055, hoodY+SZ*0.056)} p2={vec(bPilX+SZ*0.155, hoodY+SZ*0.056)}>
+          <Paint color="rgba(255,255,255,0.88)" strokeWidth={3.5} strokeCap="round" />
         </Line>
 
-        {/* Front wheel glow */}
-        <Circle cx={carX + carW * 0.24} cy={carY + carH} r={SZ * 0.085}>
-          <Paint color="rgba(51,133,255,0.30)">
-            <BlurMask blur={8} style="normal" />
-          </Paint>
-        </Circle>
-        {/* Front wheel */}
-        <Circle cx={carX + carW * 0.24} cy={carY + carH} r={SZ * 0.075}>
-          <LinearGradient
-            start={vec(carX + carW * 0.17, carY + carH - SZ * 0.075)}
-            end={vec(carX + carW * 0.31, carY + carH + SZ * 0.075)}
-            colors={['#0D1526', '#060E1E']}
-          />
-        </Circle>
-        <Circle cx={carX + carW * 0.24} cy={carY + carH} r={SZ * 0.075}>
-          <Paint color="rgba(51,133,255,0.70)" style="stroke" strokeWidth={2.5} />
-        </Circle>
-        <Circle cx={carX + carW * 0.24} cy={carY + carH} r={SZ * 0.030}>
-          <Paint color="rgba(255,255,255,0.25)" style="stroke" strokeWidth={1.5} />
-        </Circle>
-        <Circle cx={carX + carW * 0.24} cy={carY + carH} r={SZ * 0.012}>
-          <Paint color="#3385FF" />
-        </Circle>
-
-        {/* Rear wheel glow */}
-        <Circle cx={carX + carW * 0.78} cy={carY + carH} r={SZ * 0.085}>
-          <Paint color="rgba(51,133,255,0.30)">
-            <BlurMask blur={8} style="normal" />
-          </Paint>
-        </Circle>
-        {/* Rear wheel */}
-        <Circle cx={carX + carW * 0.78} cy={carY + carH} r={SZ * 0.075}>
-          <LinearGradient
-            start={vec(carX + carW * 0.71, carY + carH - SZ * 0.075)}
-            end={vec(carX + carW * 0.85, carY + carH + SZ * 0.075)}
-            colors={['#0D1526', '#060E1E']}
-          />
-        </Circle>
-        <Circle cx={carX + carW * 0.78} cy={carY + carH} r={SZ * 0.075}>
-          <Paint color="rgba(51,133,255,0.70)" style="stroke" strokeWidth={2.5} />
-        </Circle>
-        <Circle cx={carX + carW * 0.78} cy={carY + carH} r={SZ * 0.030}>
-          <Paint color="rgba(255,255,255,0.25)" style="stroke" strokeWidth={1.5} />
-        </Circle>
-        <Circle cx={carX + carW * 0.78} cy={carY + carH} r={SZ * 0.012}>
-          <Paint color="#3385FF" />
-        </Circle>
-
-        {/* Headlights */}
-        {[0, SZ * 0.04, SZ * 0.08].map((offset, i) => (
-          <Line
-            key={i}
-            p1={vec(carX + carW, carY + carH * 0.20 + offset)}
-            p2={vec(carX + carW + SZ * 0.06, carY + carH * 0.15 + offset - SZ * 0.01 * i)}
+        {/* Headlight beams */}
+        {[0, SZ*0.036, SZ*0.068].map((off, i) => (
+          <Line key={i}
+            p1={vec(cR, hoodY + SZ*0.100 + off)}
+            p2={vec(cR + SZ*0.060, hoodY + SZ*0.058 + off - SZ*0.008*i)}
           >
-            <Paint color={`rgba(51,133,255,${0.9 - i * 0.2})`} strokeWidth={2.5} strokeCap="round" />
+            <Paint color={`rgba(51,133,255,${0.90 - i*0.22})`} strokeWidth={2.8} strokeCap="round" />
           </Line>
         ))}
+
         {/* Taillights */}
-        <Line p1={vec(carX, carY + carH * 0.30)} p2={vec(carX - SZ * 0.04, carY + carH * 0.30)}>
-          <Paint color="rgba(229,57,53,0.80)" strokeWidth={3} strokeCap="round" />
+        <Line p1={vec(cL, hoodY+SZ*0.080)} p2={vec(cL-SZ*0.038, hoodY+SZ*0.080)}>
+          <Paint color="rgba(229,57,53,0.88)" strokeWidth={4.5} strokeCap="round" />
         </Line>
-        <Line p1={vec(carX, carY + carH * 0.48)} p2={vec(carX - SZ * 0.04, carY + carH * 0.48)}>
-          <Paint color="rgba(229,57,53,0.60)" strokeWidth={2.5} strokeCap="round" />
+        <Line p1={vec(cL, hoodY+SZ*0.160)} p2={vec(cL-SZ*0.028, hoodY+SZ*0.160)}>
+          <Paint color="rgba(229,57,53,0.50)" strokeWidth={3} strokeCap="round" />
         </Line>
+
+        {/* Wheels */}
+        {[fWX, rWX].map((wX, wi) => (
+          <Group key={wi}>
+            <Circle cx={wX} cy={wCY} r={wR + SZ*0.022}>
+              <Paint color="rgba(51,133,255,0.20)">
+                <BlurMask blur={8} style="normal" />
+              </Paint>
+            </Circle>
+            <Circle cx={wX} cy={wCY} r={wR}>
+              <LinearGradient
+                start={vec(wX-wR, wCY-wR)} end={vec(wX+wR, wCY+wR)}
+                colors={['#0E1D38', '#060D1C']}
+              />
+            </Circle>
+            <Circle cx={wX} cy={wCY} r={wR}>
+              <Paint color="rgba(51,133,255,0.72)" style="stroke" strokeWidth={2.5} />
+            </Circle>
+            <Circle cx={wX} cy={wCY} r={wR * 0.42}>
+              <Paint color="rgba(255,255,255,0.18)" style="stroke" strokeWidth={1.5} />
+            </Circle>
+            {[0, 60, 120].map((deg) => {
+              const rad = (deg * Math.PI) / 180;
+              return (
+                <Line key={deg}
+                  p1={vec(wX + Math.cos(rad)*wR*0.42, wCY + Math.sin(rad)*wR*0.42)}
+                  p2={vec(wX + Math.cos(rad)*wR*0.85, wCY + Math.sin(rad)*wR*0.85)}
+                >
+                  <Paint color="rgba(255,255,255,0.22)" strokeWidth={1.8} strokeCap="round" />
+                </Line>
+              );
+            })}
+            <Circle cx={wX} cy={wCY} r={SZ * 0.012}>
+              <Paint color="#3385FF" />
+            </Circle>
+          </Group>
+        ))}
       </Group>
 
-      {/* ── Location pin ── */}
+      {/* GPS pin */}
       <Group opacity={pin}>
-        {/* Glow */}
-        <Circle cx={SZ * 0.50} cy={SZ * 0.18} r={SZ * 0.12}>
-          <Paint color="rgba(51,133,255,0.35)">
-            <BlurMask blur={16} style="normal" />
+        {[SZ*0.10, SZ*0.14, SZ*0.18].map((r, i) => (
+          <Circle key={i} cx={cx} cy={SZ*0.17} r={r}>
+            <Paint color={`rgba(51,133,255,${0.28 - i*0.08})`} style="stroke" strokeWidth={1.5} />
+          </Circle>
+        ))}
+        <Circle cx={cx} cy={SZ*0.17} r={SZ*0.06}>
+          <Paint color="rgba(51,133,255,0.38)">
+            <BlurMask blur={10} style="normal" />
           </Paint>
         </Circle>
-        {/* Pin body */}
-        <Path
-          path={`M ${SZ * 0.41} ${SZ * 0.18}
-                 Q ${SZ * 0.41} ${SZ * 0.08} ${SZ * 0.50} ${SZ * 0.08}
-                 Q ${SZ * 0.59} ${SZ * 0.08} ${SZ * 0.59} ${SZ * 0.18}
-                 Q ${SZ * 0.59} ${SZ * 0.28} ${SZ * 0.50} ${SZ * 0.36}
-                 Q ${SZ * 0.41} ${SZ * 0.28} ${SZ * 0.41} ${SZ * 0.18} Z`}
-        >
+        {/* Pin drop */}
+        <Path path={
+          `M ${cx} ${SZ*0.29} ` +
+          `Q ${cx-SZ*0.065} ${SZ*0.20} ${cx-SZ*0.065} ${SZ*0.15} ` +
+          `Q ${cx-SZ*0.065} ${SZ*0.09} ${cx} ${SZ*0.09} ` +
+          `Q ${cx+SZ*0.065} ${SZ*0.09} ${cx+SZ*0.065} ${SZ*0.15} ` +
+          `Q ${cx+SZ*0.065} ${SZ*0.20} ${cx} ${SZ*0.29} Z`
+        }>
           <LinearGradient
-            start={vec(SZ * 0.41, SZ * 0.08)}
-            end={vec(SZ * 0.59, SZ * 0.36)}
-            colors={['#3385FF', '#0142C0']}
+            start={vec(cx, SZ*0.09)} end={vec(cx, SZ*0.29)}
+            colors={['#4498FF', '#0142C0']}
           />
         </Path>
-        {/* Pin inner ring */}
-        <Circle cx={SZ * 0.50} cy={SZ * 0.18} r={SZ * 0.042}>
-          <Paint color="rgba(255,255,255,0.95)" />
+        <Circle cx={cx} cy={SZ*0.17} r={SZ*0.028}>
+          <Paint color="rgba(255,255,255,0.96)" />
         </Circle>
-        <Circle cx={SZ * 0.50} cy={SZ * 0.18} r={SZ * 0.022}>
+        <Circle cx={cx} cy={SZ*0.17} r={SZ*0.013}>
           <Paint color="#0142C0" />
         </Circle>
-
-        {/* Signal arcs */}
-        {[
-          { r: SZ * 0.095, op: 0.80, sw: 2.5 },
-          { r: SZ * 0.140, op: 0.50, sw: 2.0 },
-          { r: SZ * 0.185, op: 0.28, sw: 1.5 },
-        ].map(({ r, op, sw }, i) => (
-          <Path
-            key={i}
-            path={`M ${SZ * 0.59 + (r - SZ * 0.095)} ${SZ * 0.10}
-                   Q ${SZ * 0.62 + (r - SZ * 0.095) * 0.8} ${SZ * 0.18}
-                     ${SZ * 0.59 + (r - SZ * 0.095)} ${SZ * 0.26}`}
-          >
-            <Paint
-              color={`rgba(51,133,255,${op})`}
-              style="stroke"
-              strokeWidth={sw}
-              strokeCap="round"
-            />
-          </Path>
-        ))}
-
-        {/* Dashed connector to car */}
-        <Line p1={vec(SZ * 0.50, SZ * 0.37)} p2={vec(SZ * 0.50, SZ * 0.43)}>
-          <Paint color="rgba(255,255,255,0.28)" strokeWidth={1.8} strokeCap="round" />
+        <Line p1={vec(cx, SZ*0.30)} p2={vec(cx, SZ*0.35)}>
+          <Paint color="rgba(255,255,255,0.28)" strokeWidth={2} strokeCap="round" />
         </Line>
       </Group>
     </Canvas>
@@ -447,190 +421,138 @@ export function TrackIllustration() {
 // ─── Slide 3 — Support ───────────────────────────────────────────────────────
 
 export function SupportIllustration() {
-  const bg  = useEntrance(0, 600);
-  const b1  = useEntrance(100, 550);
-  const b2  = useEntrance(400, 550);
-  const b3  = useEntrance(680, 500);
-  const sp  = useEntrance(800, 500);
+  const bg = useEntrance(0, 600);
+  const b1 = useEntrance(100, 550);
+  const b2 = useEntrance(400, 550);
+  const b3 = useEntrance(680, 500);
+  const sp = useEntrance(800, 500);
 
   const cx = SZ / 2;
   const cy = SZ / 2;
 
-  // Bubble 1 — user (left)
-  const b1X = SZ * 0.05;
-  const b1Y = SZ * 0.08;
-  const b1W = SZ * 0.66;
-  const b1H = SZ * 0.22;
-
-  // Bubble 2 — AI (right)
-  const b2X = SZ * 0.29;
-  const b2Y = SZ * 0.38;
-  const b2W = SZ * 0.66;
-  const b2H = SZ * 0.22;
-
-  // Bubble 3 — typing (left)
-  const b3X = SZ * 0.05;
-  const b3Y = SZ * 0.68;
-  const b3W = SZ * 0.36;
-  const b3H = SZ * 0.14;
+  const b1X = SZ*0.05, b1Y = SZ*0.08, b1W = SZ*0.66, b1H = SZ*0.22;
+  const b2X = SZ*0.29, b2Y = SZ*0.38, b2W = SZ*0.66, b2H = SZ*0.22;
+  const b3X = SZ*0.05, b3Y = SZ*0.68, b3W = SZ*0.36, b3H = SZ*0.14;
 
   return (
     <Canvas style={{ width: SZ, height: SZ }}>
-      {/* ── Ambient blobs ── */}
+      {/* Ambient */}
       <Group opacity={bg}>
-        <Circle cx={cx} cy={cy + SZ * 0.05} r={SZ * 0.40}>
-          <Paint color="rgba(51,133,255,0.32)">
+        <Circle cx={cx} cy={cy + SZ*0.05} r={SZ*0.40}>
+          <Paint color="rgba(51,133,255,0.30)">
             <BlurMask blur={SZ * 0.16} style="normal" />
           </Paint>
         </Circle>
-        <Circle cx={SZ * 0.80} cy={SZ * 0.20} r={SZ * 0.22}>
-          <Paint color="rgba(107,53,240,0.30)">
+        <Circle cx={SZ*0.80} cy={SZ*0.20} r={SZ*0.22}>
+          <Paint color="rgba(107,53,240,0.28)">
             <BlurMask blur={SZ * 0.12} style="normal" />
           </Paint>
         </Circle>
-        <Circle cx={SZ * 0.15} cy={SZ * 0.75} r={SZ * 0.16}>
-          <Paint color="rgba(1,66,192,0.25)">
+        <Circle cx={SZ*0.15} cy={SZ*0.75} r={SZ*0.16}>
+          <Paint color="rgba(1,66,192,0.22)">
             <BlurMask blur={SZ * 0.10} style="normal" />
           </Paint>
         </Circle>
       </Group>
 
-      {/* ── Bubble 1 — user ── */}
+      {/* Bubble 1 — user */}
       <Group opacity={b1}>
-        {/* Shadow */}
-        <RoundedRect x={b1X} y={b1Y} width={b1W} height={b1H} r={SZ * 0.045}>
-          <Paint color="rgba(1,66,192,0.20)">
+        <RoundedRect x={b1X} y={b1Y} width={b1W} height={b1H} r={SZ*0.045}>
+          <Paint color="rgba(1,66,192,0.18)">
             <BlurMask blur={10} style="normal" />
           </Paint>
         </RoundedRect>
-        {/* Body */}
-        <RoundedRect x={b1X} y={b1Y} width={b1W} height={b1H} r={SZ * 0.045}>
+        <RoundedRect x={b1X} y={b1Y} width={b1W} height={b1H} r={SZ*0.045}>
           <LinearGradient
-            start={vec(b1X, b1Y)}
-            end={vec(b1X, b1Y + b1H)}
+            start={vec(b1X, b1Y)} end={vec(b1X, b1Y+b1H)}
             colors={['rgba(13,26,60,0.97)', 'rgba(8,18,45,0.97)']}
           />
         </RoundedRect>
-        <RoundedRect x={b1X} y={b1Y} width={b1W} height={b1H} r={SZ * 0.045}>
+        <RoundedRect x={b1X} y={b1Y} width={b1W} height={b1H} r={SZ*0.045}>
           <Paint color="rgba(255,255,255,0.10)" style="stroke" strokeWidth={1} />
         </RoundedRect>
-        {/* Tail (bottom-left) */}
-        <Path path={`M ${b1X + SZ * 0.06} ${b1Y + b1H} L ${b1X + SZ * 0.02} ${b1Y + b1H + SZ * 0.05} L ${b1X + SZ * 0.16} ${b1Y + b1H}`}>
+        <Path path={`M ${b1X+SZ*0.06} ${b1Y+b1H} L ${b1X+SZ*0.02} ${b1Y+b1H+SZ*0.05} L ${b1X+SZ*0.16} ${b1Y+b1H}`}>
           <LinearGradient
-            start={vec(b1X, b1Y + b1H)}
-            end={vec(b1X, b1Y + b1H + SZ * 0.05)}
+            start={vec(b1X, b1Y+b1H)} end={vec(b1X, b1Y+b1H+SZ*0.05)}
             colors={['rgba(8,18,45,0.97)', 'rgba(8,18,45,0)']}
           />
         </Path>
-        {/* Text lines */}
-        <Line p1={vec(b1X + SZ * 0.08, b1Y + b1H * 0.38)} p2={vec(b1X + b1W - SZ * 0.08, b1Y + b1H * 0.38)}>
+        <Line p1={vec(b1X+SZ*0.08, b1Y+b1H*0.38)} p2={vec(b1X+b1W-SZ*0.08, b1Y+b1H*0.38)}>
           <Paint color="rgba(255,255,255,0.60)" strokeWidth={2.5} strokeCap="round" />
         </Line>
-        <Line p1={vec(b1X + SZ * 0.08, b1Y + b1H * 0.65)} p2={vec(b1X + b1W * 0.60, b1Y + b1H * 0.65)}>
+        <Line p1={vec(b1X+SZ*0.08, b1Y+b1H*0.65)} p2={vec(b1X+b1W*0.60, b1Y+b1H*0.65)}>
           <Paint color="rgba(255,255,255,0.35)" strokeWidth={2} strokeCap="round" />
         </Line>
       </Group>
 
-      {/* ── Bubble 2 — AI response ── */}
+      {/* Bubble 2 — AI */}
       <Group opacity={b2}>
-        {/* Glow */}
-        <RoundedRect x={b2X} y={b2Y} width={b2W} height={b2H} r={SZ * 0.045}>
+        <RoundedRect x={b2X} y={b2Y} width={b2W} height={b2H} r={SZ*0.045}>
           <Paint color="rgba(51,133,255,0.18)">
             <BlurMask blur={12} style="normal" />
           </Paint>
         </RoundedRect>
-        {/* Body */}
-        <RoundedRect x={b2X} y={b2Y} width={b2W} height={b2H} r={SZ * 0.045}>
+        <RoundedRect x={b2X} y={b2Y} width={b2W} height={b2H} r={SZ*0.045}>
           <LinearGradient
-            start={vec(b2X, b2Y)}
-            end={vec(b2X + b2W, b2Y + b2H)}
+            start={vec(b2X, b2Y)} end={vec(b2X+b2W, b2Y+b2H)}
             colors={['rgba(0,60,180,0.95)', 'rgba(0,30,100,0.95)']}
           />
         </RoundedRect>
-        <RoundedRect x={b2X} y={b2Y} width={b2W} height={b2H} r={SZ * 0.045}>
+        <RoundedRect x={b2X} y={b2Y} width={b2W} height={b2H} r={SZ*0.045}>
           <Paint color="rgba(100,160,255,0.30)" style="stroke" strokeWidth={1} />
         </RoundedRect>
-        {/* Tail (bottom-right) */}
-        <Path path={`M ${b2X + b2W - SZ * 0.16} ${b2Y + b2H} L ${b2X + b2W + SZ * 0.02} ${b2Y + b2H + SZ * 0.05} L ${b2X + b2W - SZ * 0.06} ${b2Y + b2H}`}>
+        <Path path={`M ${b2X+b2W-SZ*0.16} ${b2Y+b2H} L ${b2X+b2W+SZ*0.02} ${b2Y+b2H+SZ*0.05} L ${b2X+b2W-SZ*0.06} ${b2Y+b2H}`}>
           <LinearGradient
-            start={vec(b2X + b2W, b2Y + b2H)}
-            end={vec(b2X + b2W, b2Y + b2H + SZ * 0.05)}
+            start={vec(b2X+b2W, b2Y+b2H)} end={vec(b2X+b2W, b2Y+b2H+SZ*0.05)}
             colors={['rgba(0,30,100,0.95)', 'rgba(0,30,100,0)']}
           />
         </Path>
-        {/* Text lines */}
-        <Line p1={vec(b2X + SZ * 0.08, b2Y + b2H * 0.38)} p2={vec(b2X + b2W - SZ * 0.08, b2Y + b2H * 0.38)}>
+        <Line p1={vec(b2X+SZ*0.08, b2Y+b2H*0.38)} p2={vec(b2X+b2W-SZ*0.08, b2Y+b2H*0.38)}>
           <Paint color="rgba(255,255,255,0.85)" strokeWidth={2.5} strokeCap="round" />
         </Line>
-        <Line p1={vec(b2X + SZ * 0.08, b2Y + b2H * 0.65)} p2={vec(b2X + b2W * 0.68, b2Y + b2H * 0.65)}>
+        <Line p1={vec(b2X+SZ*0.08, b2Y+b2H*0.65)} p2={vec(b2X+b2W*0.68, b2Y+b2H*0.65)}>
           <Paint color="rgba(255,255,255,0.55)" strokeWidth={2} strokeCap="round" />
         </Line>
       </Group>
 
-      {/* ── Bubble 3 — typing ── */}
+      {/* Bubble 3 — typing */}
       <Group opacity={b3}>
-        <RoundedRect x={b3X} y={b3Y} width={b3W} height={b3H} r={SZ * 0.035}>
+        <RoundedRect x={b3X} y={b3Y} width={b3W} height={b3H} r={SZ*0.035}>
           <LinearGradient
-            start={vec(b3X, b3Y)}
-            end={vec(b3X, b3Y + b3H)}
+            start={vec(b3X, b3Y)} end={vec(b3X, b3Y+b3H)}
             colors={['rgba(13,26,60,0.90)', 'rgba(8,18,45,0.90)']}
           />
         </RoundedRect>
-        <RoundedRect x={b3X} y={b3Y} width={b3W} height={b3H} r={SZ * 0.035}>
+        <RoundedRect x={b3X} y={b3Y} width={b3W} height={b3H} r={SZ*0.035}>
           <Paint color="rgba(255,255,255,0.08)" style="stroke" strokeWidth={1} />
         </RoundedRect>
-        {/* Typing dots */}
-        {[0, SZ * 0.08, SZ * 0.16].map((offset, i) => (
-          <Circle key={i} cx={b3X + b3W * 0.22 + offset} cy={b3Y + b3H * 0.52} r={SZ * 0.024}>
-            <Paint color={`rgba(51,133,255,${1 - i * 0.28})`} />
+        {[0, SZ*0.08, SZ*0.16].map((offset, i) => (
+          <Circle key={i} cx={b3X+b3W*0.22+offset} cy={b3Y+b3H*0.52} r={SZ*0.024}>
+            <Paint color={`rgba(51,133,255,${1 - i*0.28})`} />
           </Circle>
         ))}
-        {/* Tail */}
-        <Path path={`M ${b3X + SZ * 0.06} ${b3Y + b3H} L ${b3X + SZ * 0.02} ${b3Y + b3H + SZ * 0.04} L ${b3X + SZ * 0.14} ${b3Y + b3H}`}>
+        <Path path={`M ${b3X+SZ*0.06} ${b3Y+b3H} L ${b3X+SZ*0.02} ${b3Y+b3H+SZ*0.04} L ${b3X+SZ*0.14} ${b3Y+b3H}`}>
           <LinearGradient
-            start={vec(b3X, b3Y + b3H)}
-            end={vec(b3X, b3Y + b3H + SZ * 0.04)}
+            start={vec(b3X, b3Y+b3H)} end={vec(b3X, b3Y+b3H+SZ*0.04)}
             colors={['rgba(8,18,45,0.90)', 'rgba(8,18,45,0)']}
           />
         </Path>
       </Group>
 
-      {/* ── AI sparkle ── */}
+      {/* AI sparkle */}
       <Group opacity={sp}>
-        {/* Outer glow */}
-        <Circle cx={SZ * 0.78} cy={SZ * 0.16} r={SZ * 0.09}>
+        <Circle cx={SZ*0.78} cy={SZ*0.16} r={SZ*0.09}>
           <Paint color="rgba(51,133,255,0.35)">
             <BlurMask blur={12} style="normal" />
           </Paint>
         </Circle>
-        {/* Large star */}
-        <Path
-          path={`M ${SZ * 0.78} ${SZ * 0.07}
-                 L ${SZ * 0.808} ${SZ * 0.138}
-                 L ${SZ * 0.876} ${SZ * 0.16}
-                 L ${SZ * 0.808} ${SZ * 0.182}
-                 L ${SZ * 0.78} ${SZ * 0.25}
-                 L ${SZ * 0.752} ${SZ * 0.182}
-                 L ${SZ * 0.684} ${SZ * 0.16}
-                 L ${SZ * 0.752} ${SZ * 0.138} Z`}
-        >
+        <Path path={`M ${SZ*0.78} ${SZ*0.07} L ${SZ*0.808} ${SZ*0.138} L ${SZ*0.876} ${SZ*0.16} L ${SZ*0.808} ${SZ*0.182} L ${SZ*0.78} ${SZ*0.25} L ${SZ*0.752} ${SZ*0.182} L ${SZ*0.684} ${SZ*0.16} L ${SZ*0.752} ${SZ*0.138} Z`}>
           <LinearGradient
-            start={vec(SZ * 0.684, SZ * 0.07)}
-            end={vec(SZ * 0.876, SZ * 0.25)}
+            start={vec(SZ*0.684, SZ*0.07)} end={vec(SZ*0.876, SZ*0.25)}
             colors={['rgba(100,180,255,0.95)', 'rgba(1,66,192,0.95)']}
           />
         </Path>
-        {/* Small star */}
-        <Path
-          path={`M ${SZ * 0.66} ${SZ * 0.10}
-                 L ${SZ * 0.674} ${SZ * 0.128}
-                 L ${SZ * 0.702} ${SZ * 0.136}
-                 L ${SZ * 0.674} ${SZ * 0.144}
-                 L ${SZ * 0.66} ${SZ * 0.172}
-                 L ${SZ * 0.646} ${SZ * 0.144}
-                 L ${SZ * 0.618} ${SZ * 0.136}
-                 L ${SZ * 0.646} ${SZ * 0.128} Z`}
-        >
+        <Path path={`M ${SZ*0.66} ${SZ*0.10} L ${SZ*0.674} ${SZ*0.128} L ${SZ*0.702} ${SZ*0.136} L ${SZ*0.674} ${SZ*0.144} L ${SZ*0.66} ${SZ*0.172} L ${SZ*0.646} ${SZ*0.144} L ${SZ*0.618} ${SZ*0.136} L ${SZ*0.646} ${SZ*0.128} Z`}>
           <Paint color="rgba(255,255,255,0.55)" />
         </Path>
       </Group>
@@ -645,11 +567,11 @@ const AnimatedSvgCircle = Animated.createAnimatedComponent(SvgCircle);
 const AnimatedSvgRect   = Animated.createAnimatedComponent(SvgRect);
 const AnimatedSvgLine   = Animated.createAnimatedComponent(SvgLine);
 
-const BLUE_S  = '#3385FF';
-const WHITE_S = 'rgba(255,255,255,0.90)';
-const WHITE2_S = 'rgba(255,255,255,0.35)';
-const GLOW_S  = 'rgba(51,133,255,0.30)';
-const FILL1_S = 'rgba(1,66,192,0.28)';
+const BLUE_S   = '#3385FF';
+const WHITE_S  = 'rgba(255,255,255,0.90)';
+const WHITE2_S = 'rgba(255,255,255,0.32)';
+const GLOW_S   = 'rgba(51,133,255,0.28)';
+const FILL1_S  = 'rgba(1,66,192,0.30)';
 
 function useDraw(len: number, delay = 0, dur = 800) {
   const sv = useSharedValue(len);
@@ -667,12 +589,15 @@ function useFillSvg(delay = 0, dur = 600) {
   return useAnimatedProps(() => ({ fillOpacity: sv.value }));
 }
 
+// Sedan profile in 300×156 viewBox
+// Body: x 16–284, hood/trunk top y=74, roofline y=42, wheel centers y=112 r=22
 export function CarSilhouette() {
   const glow    = useFillSvg(0, 800);
-  const body    = useDraw(900, 0, 1200);
+  const body    = useDraw(1000, 0, 1200);
+  const roof    = useDraw(700, 300, 900);
   const winFill = useFillSvg(600, 600);
-  const wheels  = useDraw(300, 900, 700);
-  const details = useDraw(250, 1100, 600);
+  const wheels  = useDraw(320, 900, 700);
+  const details = useDraw(280, 1100, 600);
   const ground  = useDraw(900, 200, 1000);
 
   const W2 = SZ;
@@ -680,56 +605,77 @@ export function CarSilhouette() {
 
   return (
     <Svg width={W2} height={H2} viewBox="0 0 300 156">
-      <AnimatedSvgCircle cx="150" cy="128" r="100" fill={GLOW_S} animatedProps={glow} stroke="none" />
-      <AnimatedSvgPath d="M8 128 L292 128"
-        stroke={WHITE2_S} strokeWidth="1.5" strokeDasharray="900" animatedProps={ground} />
+      {/* Ground glow */}
+      <AnimatedSvgCircle cx="150" cy="124" r="95" fill={GLOW_S} animatedProps={glow} stroke="none" />
+      {/* Ground line */}
+      <AnimatedSvgPath d="M10 112 L290 112"
+        stroke={WHITE2_S} strokeWidth="1.5" strokeLinecap="round"
+        strokeDasharray="900" animatedProps={ground} fill="none" />
+
+      {/* Car body — proper sedan: hood, windshield, roof, rear window, trunk */}
       <AnimatedSvgPath
-        d="M18 100 L18 78 Q20 62 40 56 L90 44 Q112 36 144 34 L184 34 Q214 36 236 46 L266 58 Q284 64 286 80 L286 100 Z"
+        d="M16 104 L16 84 Q20 74 34 74 L82 70 L104 42 L200 42 L228 70 L264 74 Q278 74 284 84 L284 104 Z"
         stroke={BLUE_S} strokeWidth="3.5" fill={FILL1_S}
-        strokeDasharray="900" animatedProps={body} />
-      <AnimatedSvgPath d="M76 56 Q98 32 142 28 L184 28 Q220 30 246 56"
-        stroke={BLUE_S} strokeWidth="3.5" fill="none"
-        strokeDasharray="900" animatedProps={body} />
-      <AnimatedSvgRect x="96" y="34" width="72" height="26" rx="4"
-        fill="rgba(51,133,255,0.22)" fillOpacity={0} stroke="none"
+        strokeDasharray="1000" animatedProps={body} strokeLinejoin="round" />
+
+      {/* Roof cap (connects A-pillar to C-pillar at top) */}
+      <AnimatedSvgPath d="M104 42 L200 42"
+        stroke={BLUE_S} strokeWidth="3.5" strokeLinecap="round"
+        strokeDasharray="700" animatedProps={roof} fill="none" />
+
+      {/* Front glass fill (windshield + front side window, B-pillar at x=156) */}
+      <AnimatedSvgRect x="82" y="42" width="74" height="32" rx="2"
+        fill="rgba(51,133,255,0.26)" fillOpacity={0} stroke="none"
         animatedProps={winFill} />
-      <AnimatedSvgPath d="M98 56 L110 32 L166 32 L166 56 Z"
-        stroke={BLUE_S} strokeWidth="2.5" fill="none"
-        strokeDasharray="300" animatedProps={body} />
-      <AnimatedSvgRect x="168" y="34" width="68" height="22" rx="4"
-        fill="rgba(51,133,255,0.22)" fillOpacity={0} stroke="none"
+      {/* Rear glass fill */}
+      <AnimatedSvgRect x="156" y="42" width="72" height="32" rx="2"
+        fill="rgba(51,133,255,0.20)" fillOpacity={0} stroke="none"
         animatedProps={winFill} />
-      <AnimatedSvgPath d="M168 56 L178 32 L224 32 L240 56 Z"
-        stroke={BLUE_S} strokeWidth="2.5" fill="none"
-        strokeDasharray="300" animatedProps={body} />
-      <AnimatedSvgLine x1="167" y1="34" x2="167" y2="100"
+
+      {/* B-pillar */}
+      <AnimatedSvgLine x1="156" y1="42" x2="156" y2="74"
+        stroke="rgba(0,20,60,0.90)" strokeWidth="8"
+        strokeDasharray="280" animatedProps={details} />
+
+      {/* Door line below beltline */}
+      <AnimatedSvgLine x1="156" y1="74" x2="156" y2="104"
         stroke={WHITE2_S} strokeWidth="2"
-        strokeDasharray="250" animatedProps={details} />
-      <AnimatedSvgLine x1="182" y1="72" x2="200" y2="72"
-        stroke={WHITE_S} strokeWidth="3.5" strokeLinecap="round"
-        strokeDasharray="250" animatedProps={details} />
-      <AnimatedSvgCircle cx="78" cy="106" r="24"
-        stroke={BLUE_S} strokeWidth="3.5" fill="rgba(2,8,18,0.92)"
-        strokeDasharray="300" animatedProps={wheels} />
-      <AnimatedSvgCircle cx="78" cy="106" r="11"
+        strokeDasharray="280" animatedProps={details} />
+
+      {/* Door handle */}
+      <AnimatedSvgLine x1="172" y1="88" x2="196" y2="88"
+        stroke={WHITE_S} strokeWidth="4" strokeLinecap="round"
+        strokeDasharray="280" animatedProps={details} />
+
+      {/* Front wheel */}
+      <AnimatedSvgCircle cx="72" cy="112" r="24"
+        stroke={BLUE_S} strokeWidth="3.5" fill="rgba(2,8,20,0.94)"
+        strokeDasharray="320" animatedProps={wheels} />
+      <AnimatedSvgCircle cx="72" cy="112" r="11"
         stroke={WHITE2_S} strokeWidth="2" fill="none"
         strokeDasharray="200" animatedProps={wheels} />
-      <AnimatedSvgCircle cx="78" cy="106" r="4"
+      <AnimatedSvgCircle cx="72" cy="112" r="4"
         fill={BLUE_S} stroke="none" strokeDasharray="50" animatedProps={wheels} />
-      <AnimatedSvgCircle cx="224" cy="106" r="24"
-        stroke={BLUE_S} strokeWidth="3.5" fill="rgba(2,8,18,0.92)"
-        strokeDasharray="300" animatedProps={wheels} />
-      <AnimatedSvgCircle cx="224" cy="106" r="11"
+
+      {/* Rear wheel */}
+      <AnimatedSvgCircle cx="228" cy="112" r="24"
+        stroke={BLUE_S} strokeWidth="3.5" fill="rgba(2,8,20,0.94)"
+        strokeDasharray="320" animatedProps={wheels} />
+      <AnimatedSvgCircle cx="228" cy="112" r="11"
         stroke={WHITE2_S} strokeWidth="2" fill="none"
         strokeDasharray="200" animatedProps={wheels} />
-      <AnimatedSvgCircle cx="224" cy="106" r="4"
+      <AnimatedSvgCircle cx="228" cy="112" r="4"
         fill={BLUE_S} stroke="none" strokeDasharray="50" animatedProps={wheels} />
-      <AnimatedSvgPath d="M284 68 L294 62 M284 76 L295 76 M284 84 L294 90"
+
+      {/* Headlights */}
+      <AnimatedSvgPath d="M282 78 L294 72 M282 86 L295 86 M282 94 L294 100"
         stroke={BLUE_S} strokeWidth="3" strokeLinecap="round"
-        strokeDasharray="250" animatedProps={details} />
-      <AnimatedSvgPath d="M16 70 L6 70 M16 80 L5 80"
-        stroke="rgba(229,57,53,0.7)" strokeWidth="3" strokeLinecap="round"
-        strokeDasharray="250" animatedProps={details} />
+        strokeDasharray="280" animatedProps={details} fill="none" />
+
+      {/* Taillights */}
+      <AnimatedSvgPath d="M18 76 L6 76 M18 86 L5 86"
+        stroke="rgba(229,57,53,0.75)" strokeWidth="3.5" strokeLinecap="round"
+        strokeDasharray="280" animatedProps={details} fill="none" />
     </Svg>
   );
 }
