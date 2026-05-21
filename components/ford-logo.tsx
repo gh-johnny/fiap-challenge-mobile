@@ -1,4 +1,4 @@
-import { Image, StyleSheet } from 'react-native';
+import { Image } from 'react-native';
 
 interface Props {
   width?: number;

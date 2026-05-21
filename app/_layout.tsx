@@ -74,7 +74,7 @@ export default function RootLayout() {
         <Stack.Screen name="(onboarding)" />
         <Stack.Screen name="(tabs)" />
       </Stack>
-      <StatusBar style="dark" />
+      <StatusBar style="light" />
 
       {locked && (
         <View style={lock.overlay}>

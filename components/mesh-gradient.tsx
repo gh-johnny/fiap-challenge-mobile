@@ -10,24 +10,25 @@ import Animated, {
   withTiming,
   type SharedValue,
 } from 'react-native-reanimated';
+import Svg, { Defs, Ellipse, RadialGradient, Stop } from 'react-native-svg';
 
 import { Colors } from '@/constants/theme';
 
 const { width, height } = Dimensions.get('window');
 
-// Light-mode blobs: soft blue/indigo tints, three opacity layers each
+// depth: parallax multiplier — higher = further back = more shift
 const BLOBS = [
-  { id: 'b1', hue: [1, 66, 192],   w: 340, h: 300, cx: width * 0.15, cy: height * 0.18, toCx: width * 0.55,  toCy: height * 0.32, duration: 14000, delay: 0,    depth: 1.6 },
-  { id: 'b2', hue: [0, 52, 200],   w: 320, h: 320, cx: width * 0.85, cy: height * 0.65, toCx: width * 0.50,  toCy: height * 0.45, duration: 17000, delay: 2000, depth: 2.4 },
-  { id: 'b3', hue: [100, 50, 230], w: 300, h: 340, cx: width * 0.72, cy: height * 0.12, toCx: width * 0.28,  toCy: height * 0.40, duration: 15000, delay: 3500, depth: 0.8 },
-  { id: 'b4', hue: [21, 88, 232],  w: 330, h: 290, cx: width * 0.20, cy: height * 0.75, toCx: width * 0.60,  toCy: height * 0.55, duration: 18000, delay: 800,  depth: 1.2 },
+  { id: 'b0', color: '#1A6BFF', w: 100, h: 100, cx: width * 0.16, cy: height * 0.06, toCx: width * 0.20, toCy: height * 0.08, duration: 2000, delay: 0, depth: 1.6 },
+  { id: 'b1', color: '#1A6BFF', w: 320, h: 280, cx: width * 0.15, cy: height * 0.18, toCx: width * 0.5,  toCy: height * 0.32, duration: 14000, delay: 0,    depth: 1.6 },
+  { id: 'b2', color: '#0038C8', w: 300, h: 300, cx: width * 0.85, cy: height * 0.65, toCx: width * 0.55, toCy: height * 0.45, duration: 17000, delay: 2000, depth: 2.4 },
+  { id: 'b3', color: '#6B35F0', w: 280, h: 320, cx: width * 0.72, cy: height * 0.12, toCx: width * 0.28, toCy: height * 0.38, duration: 15000, delay: 3500, depth: 0.8 },
+  { id: 'b4', color: '#1558E8', w: 310, h: 270, cx: width * 0.2,  cy: height * 0.75, toCx: width * 0.6,  toCy: height * 0.55, duration: 18000, delay: 800,  depth: 1.2 },
+  { id: 'b5', color: '#1558E8', w: 290, h: 220, cx: width * 0.2,  cy: height * 0.45, toCx: width * 0.4,  toCy: height * 0.45, duration: 18000, delay: 1200, depth: 1 },
+  { id: 'b6', color: '#0038C8', w: 270, h: 200, cx: width * 0.2,  cy: height * 0.95, toCx: width * 0.9,  toCy: height * 0.65, duration: 15000, delay: 10, depth: 1.1 },
+  { id: 'b7', color: '#1A6BFF', w: 220, h: 190, cx: width * 0.8,  cy: height * 0.75, toCx: width * 0.3,  toCy: height * 0.65, duration: 7500, delay: 10, depth: 1.4 },
 ];
 
-const MAX_PARALLAX = 18;
-
-function rgba(hue: number[], opacity: number) {
-  return `rgba(${hue[0]},${hue[1]},${hue[2]},${opacity})`;
-}
+const MAX_PARALLAX = 18; // px at depth=1
 
 function Blob({ blob, gyroTiltX, gyroTiltY }: {
   blob: typeof BLOBS[0];
@@ -42,11 +43,11 @@ function Blob({ blob, gyroTiltX, gyroTiltY }: {
     cx.value = withDelay(blob.delay, withRepeat(withSequence(
       withTiming(blob.toCx, { duration: blob.duration, easing: e }),
       withTiming(blob.cx,   { duration: blob.duration, easing: e }),
-    ), -1));
+    ), -1, true));
     cy.value = withDelay(blob.delay, withRepeat(withSequence(
       withTiming(blob.toCy, { duration: blob.duration * 1.3, easing: e }),
       withTiming(blob.cy,   { duration: blob.duration * 1.3, easing: e }),
-    ), -1));
+    ), -1, true));
   }, []);
 
   const style = useAnimatedStyle(() => {
@@ -60,30 +61,24 @@ function Blob({ blob, gyroTiltX, gyroTiltY }: {
     };
   });
 
-  const { w, h, hue } = blob;
-
   return (
-    <Animated.View style={[styles.blob, style, { width: w, height: h }]}>
-      {/* Outer ring — very faint */}
-      <View style={{
-        position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
-        borderRadius: h / 2,
-        backgroundColor: rgba(hue, 0.07),
-      }} />
-      {/* Middle ring */}
-      <View style={{
-        position: 'absolute',
-        top: h * 0.18, left: w * 0.18, right: w * 0.18, bottom: h * 0.18,
-        borderRadius: h * 0.32,
-        backgroundColor: rgba(hue, 0.12),
-      }} />
-      {/* Core — most opaque */}
-      <View style={{
-        position: 'absolute',
-        top: h * 0.36, left: w * 0.36, right: w * 0.36, bottom: h * 0.36,
-        borderRadius: h * 0.14,
-        backgroundColor: rgba(hue, 0.18),
-      }} />
+    <Animated.View style={[styles.blob, style, { width: blob.w, height: blob.h }]}>
+      <Svg width={blob.w} height={blob.h} style={StyleSheet.absoluteFill}>
+        <Defs>
+          <RadialGradient id={`grad-${blob.id}`} cx="50%" cy="50%" r="50%">
+            <Stop offset="0%"   stopColor={blob.color} stopOpacity="0.82" />
+            <Stop offset="60%"  stopColor={blob.color} stopOpacity="0.35" />
+            <Stop offset="100%" stopColor={blob.color} stopOpacity="0" />
+          </RadialGradient>
+        </Defs>
+        <Ellipse
+          cx={blob.w / 2}
+          cy={blob.h / 2}
+          rx={blob.w / 2}
+          ry={blob.h / 2}
+          fill={`url(#grad-${blob.id})`}
+        />
+      </Svg>
     </Animated.View>
   );
 }

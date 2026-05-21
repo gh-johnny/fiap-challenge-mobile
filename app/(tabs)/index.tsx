@@ -1,6 +1,5 @@
 import * as Haptics from 'expo-haptics';
 import * as Notifications from 'expo-notifications';
-import { BlurView } from 'expo-blur';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
@@ -29,17 +28,15 @@ import { useSosStore } from '@/store/sos';
 function QuickAction({ icon, label, onPress }: { icon: React.ComponentProps<typeof Ionicons>['name']; label: string; onPress?: () => void }) {
   return (
     <Pressable
-      style={({ pressed }) => [styles.actionCard, pressed && { opacity: 0.75, transform: [{ scale: 0.95 }] }]}
+      style={({ pressed }) => [styles.actionCard, pressed && { opacity: 0.75 }]}
       onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); onPress?.(); }}
     >
-      <BlurView
-        intensity={Platform.OS === 'android' ? 0 : 40}
-        tint="light"
-        style={[styles.actionBlur, Platform.OS === 'android' && { backgroundColor: 'rgba(238,242,255,0.90)' }]}
+      <View
+        style={[styles.actionBlur]}
       >
         <Ionicons name={icon} size={26} color={Colors.mutedLight} />
         <Text style={styles.actionLabel}>{label}</Text>
-      </BlurView>
+      </View>
     </Pressable>
   );
 }
@@ -125,7 +122,7 @@ export default function HomeScreen() {
         >
           {/* Header */}
           <Animated.View style={[styles.header, headerStyle]}>
-            <FordLogo width={120} height={50} />
+            <FordLogo width={120} height={70} />
             <Pressable
               style={({ pressed }) => [styles.avatar, pressed && { opacity: 0.7 }]}
               onPress={() => {
@@ -250,25 +247,29 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.lg,
   },
   avatar: {
-    width: 40, height: 40, borderRadius: 20,
-    backgroundColor: Colors.blue,
-    alignItems: 'center', justifyContent: 'center',
-    shadowColor: Colors.blue,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 8,
-    elevation: 6,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    borderColor: Colors.blue,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.35)',
   },
-  avatarText: { color: Colors.white, fontWeight: '700', fontSize: 16 },
+  avatarText: {
+    color: Colors.blue,
+    fontWeight: '700',
+    fontSize: 16
+  },
   greeting: { marginBottom: Spacing.lg },
   greetingSmall: { ...Typography.body, fontSize: 14 },
   greetingName: { color: Colors.text, fontSize: 32, fontWeight: '800' },
   noVehicleCard: {
-    backgroundColor: 'rgba(255,255,255,0.8)',
+    borderColor: 'rgba(238,242,255,0.95)',
+    backgroundColor: Platform.OS === 'android' ? 'rgba(238,242,255,0.35)' : 'transparent',
     borderRadius: Radius.xl,
     padding: Spacing.xl,
     borderWidth: 1,
-    borderColor: Colors.border,
     alignItems: 'center',
     gap: Spacing.sm,
     marginBottom: Spacing.md,
@@ -278,11 +279,11 @@ const styles = StyleSheet.create({
   noVehicleSub: { ...Typography.body, fontSize: 13, textAlign: 'center' },
   sectionTitle: { ...Typography.label, fontSize: 11, letterSpacing: 2, marginBottom: Spacing.sm, marginTop: Spacing.xs },
   card: {
-    backgroundColor: 'rgba(255,255,255,0.85)',
+    borderColor: 'rgba(238,242,255,0.95)',
+    backgroundColor: Platform.OS === 'android' ? 'rgba(238,242,255,0.35)' : 'transparent',
     borderRadius: Radius.lg,
     padding: Spacing.lg,
     borderWidth: 1,
-    borderColor: Colors.border,
     marginBottom: Spacing.md,
   },
   divider: { height: 1, backgroundColor: Colors.border, marginVertical: Spacing.md },
@@ -295,7 +296,8 @@ const styles = StyleSheet.create({
     borderRadius: Radius.lg,
     overflow: 'hidden',
     borderWidth: 1,
-    borderColor: 'rgba(1,66,192,0.20)',
+    borderColor: 'rgba(238,242,255,0.95)',
+    backgroundColor: Platform.OS === 'android' ? 'rgba(238,242,255,0.35)' : 'transparent',
   },
   actionBlur: {
     padding: Spacing.md,
@@ -304,11 +306,11 @@ const styles = StyleSheet.create({
   },
   actionLabel: { color: Colors.mutedLight, fontSize: 11, fontWeight: '600', textAlign: 'center' },
   assistCard: {
-    backgroundColor: 'rgba(255,255,255,0.85)',
+    borderColor: 'rgba(238,242,255,0.95)',
+    backgroundColor: Platform.OS === 'android' ? 'rgba(238,242,255,0.35)' : 'transparent',
     borderRadius: Radius.lg,
     padding: Spacing.md,
     borderWidth: 1,
-    borderColor: Colors.border,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',

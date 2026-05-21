@@ -1,4 +1,3 @@
-import { BlurView } from 'expo-blur';
 import { Ionicons } from '@expo/vector-icons';
 import { Pressable, StyleSheet, Text, View, Platform } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -27,9 +26,7 @@ export function LiquidGlassTabBar({ state, descriptors, navigation }: BottomTabB
 
   return (
     <View style={[styles.wrapper, { paddingBottom: insets.bottom + 8 }]}>
-      <BlurView
-        intensity={Platform.OS === 'android' ? 40 : 60}
-        tint="light"
+      <View
         style={styles.blur}
       >
         <View style={styles.inner}>
@@ -66,7 +63,7 @@ export function LiquidGlassTabBar({ state, descriptors, navigation }: BottomTabB
             );
           })}
         </View>
-      </BlurView>
+      </View>
     </View>
   );
 }
@@ -83,7 +80,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     borderWidth: 1,
     borderColor: 'rgba(1,66,192,0.20)',
-    backgroundColor: Platform.OS === 'android' ? 'rgba(238,242,255,0.92)' : 'transparent',
+    backgroundColor: Platform.OS === 'android' ? 'rgba(238,242,255,0.90)' : 'transparent',
   },
   inner: {
     flexDirection: 'row',

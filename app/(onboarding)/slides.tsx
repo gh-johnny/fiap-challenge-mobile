@@ -176,7 +176,7 @@ export default function SlidesScreen() {
       {activeIndex === SLIDES.length - 1 && (
         <SafeAreaView style={styles.ctaWrapper} pointerEvents="box-none">
           <Pressable
-            style={({ pressed }) => [styles.ctaBtn, pressed && { opacity: 0.85, transform: [{ scale: 0.97 }] }]}
+            style={({ pressed }) => [styles.ctaBtn, pressed && { opacity: 0.85 }]}
             onPress={() => {
               Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
               router.replace('/(onboarding)/vehicle-setup');
@@ -245,7 +245,9 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(1,66,192,0.18)',
   },
   progressSegmentActive: {
-    backgroundColor: Colors.blue,
+    backgroundColor: 'rgba(1,66,192,0.48)',
+    borderColor: 'rgba(255, 255, 255, 0.4)',
+    borderWidth: 1,
     height: 52,
   },
   hintWrapper: {
@@ -272,17 +274,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: Spacing.sm,
-    backgroundColor: Colors.blue,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
     borderRadius: Radius.pill,
     paddingVertical: 16,
     paddingHorizontal: Spacing.xxl,
     width: '100%',
-    shadowColor: Colors.blue,
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.5,
-    shadowRadius: 16,
-    elevation: 8,
+    borderWidth: 1,
+    borderColor: Colors.blue,
   },
-  ctaText: { color: Colors.white, fontSize: 17, fontWeight: '700', letterSpacing: 0.3 },
-  ctaArrow: { color: Colors.white, fontSize: 18, fontWeight: '700' },
+  ctaText: { color: Colors.blue, fontSize: 17, fontWeight: '700', letterSpacing: 0.3 },
+  ctaArrow: { color: Colors.blue, fontSize: 18, fontWeight: '700' },
 });
