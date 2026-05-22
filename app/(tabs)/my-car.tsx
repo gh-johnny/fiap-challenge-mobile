@@ -1,7 +1,7 @@
 import * as Haptics from 'expo-haptics';
 import * as LocalAuth from 'expo-local-authentication';
 import { useEffect, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import Animated, {
   Easing,
   useAnimatedStyle,
@@ -360,9 +360,9 @@ const styles = StyleSheet.create({
   sectionTitle: { ...Typography.label, fontSize: 11, letterSpacing: 2, marginBottom: Spacing.sm, marginTop: Spacing.xs },
 
   card: {
-    backgroundColor: 'rgba(255,255,255,0.85)',
+    backgroundColor: Platform.OS === 'android' ? 'rgba(238,242,255,0.35)' : 'transparent',
     borderRadius: Radius.lg, padding: Spacing.lg,
-    borderWidth: 1, borderColor: Colors.border, marginBottom: Spacing.md,
+    borderWidth: 1, borderColor: 'rgba(238,242,255,0.95)', marginBottom: Spacing.md,
   },
   gaugeCard: { alignItems: 'center' },
 
@@ -419,8 +419,9 @@ const styles = StyleSheet.create({
   docsStack: { gap: Spacing.sm, marginBottom: Spacing.md },
   docCard: {
     flexDirection: 'row', alignItems: 'center', gap: Spacing.md,
-    backgroundColor: 'rgba(255,255,255,0.85)', borderRadius: Radius.lg,
-    padding: Spacing.md, borderWidth: 1, borderColor: Colors.border,
+    backgroundColor: Platform.OS === 'android' ? 'rgba(238,242,255,0.35)' : 'transparent',
+    borderRadius: Radius.lg,
+    padding: Spacing.md, borderWidth: 1, borderColor: 'rgba(238,242,255,0.95)',
   },
   docIcon: { fontSize: 24 },
   docTitle: { color: Colors.text, fontSize: 14, fontWeight: '600' },

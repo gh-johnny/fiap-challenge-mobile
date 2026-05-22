@@ -41,7 +41,8 @@
       ],
       "expo-secure-store",
       "expo-audio",
-      "expo-background-task"
+      "expo-background-task",
+      "expo-asset"
     ],
     "experiments": {
       "typedRoutes": true,

@@ -277,13 +277,15 @@ const styles = StyleSheet.create({
   addBtnText: { color: Colors.mutedLight, fontSize: 11, fontWeight: '700' },
 
   card: {
-    backgroundColor: 'rgba(255,255,255,0.85)', borderRadius: Radius.lg,
-    padding: Spacing.lg, borderWidth: 1, borderColor: Colors.border, marginBottom: Spacing.md,
+    backgroundColor: Platform.OS === 'android' ? 'rgba(238,242,255,0.35)' : 'transparent',
+    borderRadius: Radius.lg,
+    padding: Spacing.lg, borderWidth: 1, borderColor: 'rgba(238,242,255,0.95)', marginBottom: Spacing.md,
   },
   emptyCard: {
-    backgroundColor: 'rgba(255,255,255,0.75)', borderRadius: Radius.xl,
+    backgroundColor: Platform.OS === 'android' ? 'rgba(238,242,255,0.35)' : 'transparent',
+    borderRadius: Radius.xl,
     padding: Spacing.xl, alignItems: 'center', gap: Spacing.sm,
-    borderWidth: 1, borderColor: Colors.border, marginBottom: Spacing.md,
+    borderWidth: 1, borderColor: 'rgba(238,242,255,0.95)', marginBottom: Spacing.md,
   },
   emptyEmoji: { fontSize: 40 },
   emptyText: { ...Typography.subheading, fontSize: 15 },
